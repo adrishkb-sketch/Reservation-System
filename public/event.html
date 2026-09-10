@@ -192,6 +192,9 @@
     async function loadEventDetails() {
       try {
         const res = await API.get(`/events/${eventId}`);
+        if (!res || !res.event) {
+          throw new Error('Event not found or has been removed.');
+        }
         eventData = res;
         sessionStorage.setItem(`cached_event_${eventId}`, JSON.stringify(res));
         renderEventDetails();
@@ -202,28 +205,61 @@
 
         if (!liveStream) {
           liveStream = new CosmicLiveStream(eventId, (type, payload) => {
-            loadEventDetails();
+            refreshLiveStatsOnly();
           });
         }
       } catch (err) {
         if (!eventData) {
+          const mainContainer = document.querySelector('main');
+          if (mainContainer) {
+            mainContainer.innerHTML = `
+              <div class="glass-card" style="text-align: center; padding: 60px 20px; margin-top: 30px;">
+                <div data-icon="alertCircle" data-size="52" style="color: var(--amber-core); margin: 0 auto 16px;"></div>
+                <h2 style="font-size: 1.5rem; color: #fff;">Event Not Found or Unavailable</h2>
+                <p class="text-muted" style="margin-top: 8px; font-size: 0.95rem;">The requested event ID could not be loaded or is not published yet.</p>
+                <div style="margin-top: 24px;">
+                  <a href="/" class="btn btn-primary btn-lg">← Browse Available Events</a>
+                </div>
+              </div>
+            `;
+            Icons.replace(mainContainer);
+          }
           Toast.error(err.message || 'Failed to load event details.');
         }
       }
     }
 
+    async function refreshLiveStatsOnly() {
+      try {
+        const res = await API.get(`/events/${eventId}`);
+        if (res && res.buckets) {
+          eventData.buckets = res.buckets;
+          eventData.stats = res.stats;
+          renderCapacityPools();
+          if (selectedDept && selectedProg && selectedYear) {
+            updateResolvedBucketPreview();
+          }
+        }
+      } catch (e) {}
+    }
+
     function renderEventDetails() {
+      if (!eventData || !eventData.event) return;
       const { event, groupingExplanation } = eventData;
       document.getElementById('event-title').textContent = event.name;
       document.getElementById('event-desc').textContent = event.description;
       
       const bannerImg = document.getElementById('event-banner-img');
+      const bannerSkel = document.getElementById('banner-skeleton');
       const resolvedBanner = resolveBannerUrl(event.banner_url, event.name, event.id);
+
       bannerImg.onerror = function() {
         this.onerror = null;
         this.src = getFastBanner(event.name, event.id);
       };
       bannerImg.src = resolvedBanner;
+      if (bannerSkel) bannerSkel.style.display = 'none';
+      bannerImg.style.display = 'block';
       
       const startDate = new Date(event.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       document.getElementById('event-date').innerHTML = `<span data-icon="calendar" data-size="14"></span> <span>${startDate}</span>`;
@@ -233,6 +269,7 @@
     }
 
     function renderCapacityPools() {
+      if (!eventData || !eventData.buckets) return;
       const { buckets } = eventData;
       const container = document.getElementById('capacity-pools-container');
 

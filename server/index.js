@@ -40,6 +40,14 @@ app.use('/api', seatRoutes);
 app.use('/api/admin/check-in', checkInRoutes);
 app.use('/api/admin', statsRoutes);
 
+// Auto-seed demo events if table is empty
+try {
+  const { seedDemoData } = require('./seed');
+  seedDemoData();
+} catch (err) {
+  console.warn('[Seed Auto-Init Warning]', err.message);
+}
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString(), env: config.NODE_ENV });

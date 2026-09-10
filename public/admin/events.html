@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Manage Events | CampusPass Admin</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Admin Nav -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/admin/index.html" class="brand-logo">
+        <div class="brand-icon">🛡️</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">EVENTS</span></span>
+      </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/admin/index.html" class="nav-link">← Dashboard</a>
+        <a href="/admin/events.html?action=create" class="btn btn-primary btn-sm">+ New Event</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 24px; padding-bottom: 70px;">
+    <!-- Event Form Studio (Create / Edit) -->
+    <div id="event-editor-container" class="glass-card" style="margin-bottom: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 id="editor-heading" style="font-size: 1.4rem;">Create College Event</h2>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onclick="deleteCurrentEditingEvent()" class="btn btn-danger btn-sm" id="btn-delete-current" style="display: none;">🗑️ Delete This Event</button>
+          <button type="button" onclick="cancelEdit()" class="btn btn-secondary btn-sm" id="btn-cancel-edit" style="display: none;">Cancel Edit</button>
+        </div>
+      </div>
+
+      <form id="event-form" onsubmit="handleSaveEvent(event)">
+        <input type="hidden" id="edit-event-id">
+
+        <!-- Basic Details -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="event-name">Event Name *</label>
+            <input type="text" id="event-name" required class="form-input" placeholder="e.g. Annual Tech Symposium 2026">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="event-status">Publication Status *</label>
+            <select id="event-status" required class="form-select">
+              <option value="draft">Draft (Admin Only)</option>
+              <option value="published" selected>Published (Live for Registration)</option>
+              <option value="closed">Registration Closed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="event-description">Event Description *</label>
+          <textarea id="event-description" required class="form-textarea" rows="3" placeholder="Describe the event details, rules, venue, and highlights..."></textarea>
+        </div>
+
+        <!-- Banner Upload / URL -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="event-banner-file">Banner Image Upload (JPG/PNG/WebP)</label>
+            <input type="file" id="event-banner-file" class="form-input" accept="image/png, image/jpeg, image/webp">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="event-banner-url">Or Image URL</label>
+            <input type="url" id="event-banner-url" class="form-input" placeholder="https://images.unsplash.com/...">
+          </div>
+        </div>
+
+        <!-- Schedule & Total Seats -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="event-start">Start Date & Time *</label>
+            <input type="datetime-local" id="event-start" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="event-end">End Date & Time *</label>
+            <input type="datetime-local" id="event-end" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="event-total-physical-seats">Total Physical Capacity (Seats)</label>
+            <input type="number" id="event-total-physical-seats" min="0" class="form-input" placeholder="e.g. 100" value="100">
+          </div>
+        </div>
+
+        <!-- SECTION 3: College Eligibility Matrix -->
+        <div class="glass-card" style="margin: 20px 0; background: rgba(0, 0, 0, 0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <h3 style="font-size: 1.15rem; color: #fff;">3. College Eligibility Matrix</h3>
+              <p class="text-muted" style="font-size: 0.82rem;">Select which Department + Program + Year combinations are allowed to register.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" onclick="toggleAllEligibility(true)" class="btn btn-secondary btn-sm">Select All</button>
+              <button type="button" onclick="toggleAllEligibility(false)" class="btn btn-secondary btn-sm">Clear All</button>
+            </div>
+          </div>
+
+          <div id="eligibility-matrix-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+            <!-- Injected matrix checkboxes -->
+          </div>
+        </div>
+
+        <!-- SECTION 4: Flexible Capacity Grouping System (3 Independent Switches) -->
+        <div class="glass-card" style="margin: 20px 0; background: rgba(99, 102, 241, 0.04); border-color: rgba(99, 102, 241, 0.25);">
+          <div style="margin-bottom: 14px;">
+            <div class="badge badge-purple" style="margin-bottom: 6px;">⚡ Capacity Engine</div>
+            <h3 style="font-size: 1.2rem; color: #fff;">4. Flexible Capacity Grouping (3 Independent Switches)</h3>
+            <p class="text-muted" style="font-size: 0.85rem;">Determine how registration capacity is pooled. Automatically generates required capacity buckets from selected eligibility.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+            <!-- Switch 1: Department -->
+            <div class="switch-wrapper">
+              <div>
+                <strong style="color: #fff; display: block;">Department Grouping</strong>
+                <span class="text-muted" style="font-size: 0.78rem;">Separate CSE / IT / CT</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-group-dept" onchange="refreshBucketPreview()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <!-- Switch 2: Program -->
+            <div class="switch-wrapper">
+              <div>
+                <strong style="color: #fff; display: block;">Program Grouping</strong>
+                <span class="text-muted" style="font-size: 0.78rem;">Separate B.Tech / M.Tech</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-group-prog" onchange="refreshBucketPreview()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <!-- Switch 3: Year -->
+            <div class="switch-wrapper">
+              <div>
+                <strong style="color: #fff; display: block;">Year Grouping</strong>
+                <span class="text-muted" style="font-size: 0.78rem;">Separate 1st, 2nd, 3rd, 4th</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="switch-group-year" checked onchange="refreshBucketPreview()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Grouping Explanation Box -->
+          <div class="glass-card" style="margin-top: 14px; padding: 12px 16px; background: rgba(99, 102, 241, 0.08); border-color: var(--indigo-core);">
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: #A78BFA; font-weight: 700;">Grouping Behavior:</div>
+            <div id="grouping-explanation-text" style="font-size: 0.92rem; color: #fff; margin-top: 2px;">...</div>
+          </div>
+        </div>
+
+        <!-- Generated Capacity Buckets with Numerical Inputs -->
+        <div class="glass-card" style="margin: 20px 0;">
+          <h3 style="font-size: 1.15rem; margin-bottom: 6px;">Capacity Pools & Limits</h3>
+          <p class="text-muted" style="font-size: 0.82rem; margin-bottom: 14px;">Set the maximum confirmed registration capacity for each generated bucket.</p>
+
+          <div id="generated-buckets-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+            <!-- Dynamic bucket capacity inputs -->
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div style="text-align: right; margin-top: 24px;">
+          <button type="submit" class="btn btn-primary btn-lg" id="btn-save-event">
+            Save & Publish Event ➔
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Existing Events List -->
+    <div style="margin-top: 36px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 1.3rem;">All Registered Events</h2>
+      </div>
+      <div id="admin-events-list"></div>
+    </div>
+  </main>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    const DEPARTMENTS = ['CSE', 'IT', 'CT'];
+    const PROGRAMS = ['B.Tech', 'M.Tech'];
+    const YEARS = {
+      'B.Tech': ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+      'M.Tech': ['1st Year', '2nd Year']
+    };
+
+    let existingBucketsMap = {};
+
+    function initEligibilityMatrix() {
+      const container = document.getElementById('eligibility-matrix-container');
+      let html = '';
+
+      for (const dept of DEPARTMENTS) {
+        html += `
+          <div style="background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <div style="font-weight: 700; color: #38BDF8; margin-bottom: 8px; font-size: 0.95rem;">${dept} Department</div>
+        `;
+
+        for (const prog of PROGRAMS) {
+          html += `<div style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 2px;">${prog}:</div><div style="display: flex; flex-direction: column; gap: 4px;">`;
+          for (const yr of YEARS[prog]) {
+            html += `
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                <input type="checkbox" class="elig-checkbox" data-dept="${dept}" data-prog="${prog}" data-year="${yr}" checked onchange="refreshBucketPreview()">
+                <span>${yr}</span>
+              </label>
+            `;
+          }
+          html += `</div>`;
+        }
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function toggleAllEligibility(selected) {
+      document.querySelectorAll('.elig-checkbox').forEach(cb => {
+        cb.checked = selected;
+      });
+      refreshBucketPreview();
+    }
+
+    function getSelectedEligibility() {
+      const selected = [];
+      document.querySelectorAll('.elig-checkbox:checked').forEach(cb => {
+        selected.push({
+          department: cb.dataset.dept,
+          program: cb.dataset.prog,
+          year: cb.dataset.year
+        });
+      });
+      return selected;
+    }
+
+    async function refreshBucketPreview() {
+      const elig = getSelectedEligibility();
+      const groupDept = document.getElementById('switch-group-dept').checked;
+      const groupProg = document.getElementById('switch-group-prog').checked;
+      const groupYear = document.getElementById('switch-group-year').checked;
+
+      if (elig.length === 0) {
+        document.getElementById('grouping-explanation-text').textContent = 'Please select at least one eligible combination above.';
+        document.getElementById('generated-buckets-container').innerHTML = '<div class="text-muted">No eligibility selected.</div>';
+        return;
+      }
+
+      try {
+        const res = await API.post('/events/preview-buckets', {
+          eligibility: elig,
+          groupDept,
+          groupProg,
+          groupYear
+        });
+
+        document.getElementById('grouping-explanation-text').textContent = res.explanation;
+        
+        const container = document.getElementById('generated-buckets-container');
+        container.innerHTML = res.buckets.map(b => {
+          const prevVal = existingBucketsMap[b.bucket_key] !== undefined ? existingBucketsMap[b.bucket_key] : 20;
+          return `
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+              <div style="font-weight: 700; color: #fff; font-size: 0.92rem; margin-bottom: 4px;">${b.display_name}</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px;">Pool Key: ${b.bucket_key}</div>
+              <label class="form-label" style="font-size: 0.78rem;">Confirmed Capacity Limit:</label>
+              <input type="number" min="0" class="form-input bucket-cap-input" data-key="${b.bucket_key}" value="${prevVal}" required style="padding: 8px 12px;">
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function handleSaveEvent(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-event');
+      btn.setAttribute('disabled', 'true');
+      btn.textContent = 'Saving Event... ⏳';
+
+      try {
+        const editId = document.getElementById('edit-event-id').value;
+        const name = document.getElementById('event-name').value.trim();
+        const description = document.getElementById('event-description').value.trim();
+        const status = document.getElementById('event-status').value;
+        const startAt = document.getElementById('event-start').value;
+        const endAt = document.getElementById('event-end').value;
+        const totalPhysicalSeats = document.getElementById('event-total-physical-seats').value;
+        const bannerUrl = document.getElementById('event-banner-url').value.trim();
+        const bannerFile = document.getElementById('event-banner-file').files[0];
+
+        const groupDept = document.getElementById('switch-group-dept').checked ? 1 : 0;
+        const groupProg = document.getElementById('switch-group-prog').checked ? 1 : 0;
+        const groupYear = document.getElementById('switch-group-year').checked ? 1 : 0;
+
+        const eligibility = getSelectedEligibility();
+        const bucketCapacities = {};
+        document.querySelectorAll('.bucket-cap-input').forEach(inp => {
+          bucketCapacities[inp.dataset.key] = parseInt(inp.value, 10) || 0;
+        });
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('description', description);
+        formData.append('status', status);
+        formData.append('startAt', new Date(startAt).toISOString());
+        formData.append('endAt', new Date(endAt).toISOString());
+        formData.append('totalPhysicalSeats', totalPhysicalSeats);
+        formData.append('groupDept', groupDept);
+        formData.append('groupProg', groupProg);
+        formData.append('groupYear', groupYear);
+        formData.append('eligibility', JSON.stringify(eligibility));
+        formData.append('bucketCapacities', JSON.stringify(bucketCapacities));
+        if (bannerUrl) formData.append('bannerUrl', bannerUrl);
+        if (bannerFile) formData.append('banner', bannerFile);
+
+        if (editId) {
+          await API.put(`/events/${editId}`, formData);
+          await API.put(`/events/${editId}/grouping-and-eligibility`, {
+            eligibility,
+            groupDept,
+            groupProg,
+            groupYear,
+            bucketCapacities
+          });
+          Toast.success('Event updated successfully!');
+        } else {
+          await API.post('/events', formData);
+          Toast.success('Event created successfully!');
+        }
+
+        cancelEdit();
+        loadAllEvents();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to save event.');
+      } finally {
+        btn.removeAttribute('disabled');
+        btn.textContent = 'Save & Publish Event ➔';
+      }
+    }
+
+    async function loadAllEvents() {
+      const container = document.getElementById('admin-events-list');
+      try {
+        const res = await API.get('/events/admin/all');
+        const events = res.events || [];
+
+        if (events.length === 0) {
+          container.innerHTML = '<div class="glass-card text-muted" style="text-align: center; padding: 30px;">No events in database. Use the form above to create one.</div>';
+          return;
+        }
+
+        container.innerHTML = events.map(ev => {
+          const badgeClass = ev.status === 'published' ? 'badge-published' : (ev.status === 'draft' ? 'badge-draft' : 'badge-closed');
+          return `
+            <div class="glass-card" style="margin-bottom: 14px; padding: 18px;" id="event-row-${ev.id}">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="badge ${badgeClass}">● ${ev.status.toUpperCase()}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(ev.start_at).toLocaleDateString()}</span>
+                  </div>
+                  <h3 style="font-size: 1.15rem; margin-top: 6px;">${ev.name}</h3>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+                    Capacity: ${ev.total_capacity || 0} | Confirmed: <strong class="text-emerald">${ev.confirmed_count}</strong> | Waiting: <strong class="text-amber">${ev.waiting_count}</strong>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button onclick="editEvent(${ev.id})" class="btn btn-outline-cyan btn-sm">✏️ Edit</button>
+                  <a href="/admin/seats.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">💺 Seats</a>
+                  <a href="/admin/registrations.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">👥 Students</a>
+                  <button onclick="deleteEvent(${ev.id}, '${ev.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="text-rose">Error loading events: ${err.message}</div>`;
+      }
+    }
+
+    async function editEvent(id) {
+      try {
+        const res = await API.get(`/events/${id}`);
+        const { event, eligibility, buckets } = res;
+
+        document.getElementById('edit-event-id').value = event.id;
+        document.getElementById('editor-heading').textContent = `Edit Event: ${event.name}`;
+        document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+        document.getElementById('btn-delete-current').style.display = 'inline-block';
+        document.getElementById('event-name').value = event.name;
+        document.getElementById('event-description').value = event.description;
+        document.getElementById('event-status').value = event.status;
+        document.getElementById('event-total-physical-seats').value = event.total_physical_seats;
+        document.getElementById('event-banner-url').value = event.banner_url || '';
+        
+        const toLocalISO = (isoStr) => new Date(isoStr).toISOString().slice(0, 16);
+        document.getElementById('event-start').value = toLocalISO(event.start_at);
+        document.getElementById('event-end').value = toLocalISO(event.end_at);
+
+        document.getElementById('switch-group-dept').checked = !!event.group_dept;
+        document.getElementById('switch-group-prog').checked = !!event.group_prog;
+        document.getElementById('switch-group-year').checked = !!event.group_year;
+
+        const eligSet = new Set(eligibility.map(e => `${e.department}|${e.program}|${e.year}`));
+        document.querySelectorAll('.elig-checkbox').forEach(cb => {
+          const key = `${cb.dataset.dept}|${cb.dataset.prog}|${cb.dataset.year}`;
+          cb.checked = eligSet.has(key);
+        });
+
+        existingBucketsMap = {};
+        for (const b of buckets) {
+          existingBucketsMap[b.bucket_key] = b.capacity;
+        }
+
+        refreshBucketPreview();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        Toast.error(err.message || 'Failed to fetch event.');
+      }
+    }
+
+    function cancelEdit() {
+      document.getElementById('edit-event-id').value = '';
+      document.getElementById('editor-heading').textContent = 'Create College Event';
+      document.getElementById('btn-cancel-edit').style.display = 'none';
+      document.getElementById('btn-delete-current').style.display = 'none';
+      document.getElementById('event-form').reset();
+      toggleAllEligibility(true);
+      refreshBucketPreview();
+    }
+
+    async function deleteCurrentEditingEvent() {
+      const editId = document.getElementById('edit-event-id').value;
+      const name = document.getElementById('event-name').value;
+      if (editId) {
+        await deleteEvent(editId, name);
+        cancelEdit();
+      }
+    }
+
+    async function deleteEvent(id, name) {
+      if (!confirm(`Are you sure you want to permanently delete event "${name || id}" and all its registrations, seats, and check-ins?`)) return;
+      try {
+        const res = await API.delete(`/events/${id}`);
+        Toast.success(res.message);
+        loadAllEvents();
+      } catch (err) {
+        Toast.error(err.message || 'Failed to delete event.');
+      }
+    }
+
+    initEligibilityMatrix();
+    refreshBucketPreview();
+    loadAllEvents();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('id')) {
+      editEvent(urlParams.get('id'));
+    }
+  </script>
+</body>
+</html>

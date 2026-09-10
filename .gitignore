@@ -1,0 +1,6 @@
+node_modules/
+data/*.sqlite*
+data/test_*
+.DS_Store
+.env
+.vercel

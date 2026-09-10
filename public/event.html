@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Event Registration | CampusPass</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Navigation -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🎓</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">← All Events</a>
+        <a href="/ticket.html" class="nav-link">Check Registration</a>
+        <a href="/admin/index.html" class="btn btn-secondary btn-sm">Admin Portal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container container-narrow" style="padding-top: 24px; padding-bottom: 60px;">
+    <!-- Event Banner & Header -->
+    <div class="glass-card" style="padding: 0; overflow: hidden; margin-bottom: 24px;">
+      <img id="event-banner-img" src="" alt="Event Banner" style="width: 100%; height: 230px; object-fit: cover; background: #1F2937;">
+      <div style="padding: 24px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+          <span id="event-status-badge" class="badge badge-published">Published</span>
+          <span id="event-grouping-badge" class="badge badge-purple">Multi-Group Capacity</span>
+        </div>
+        <h1 id="event-title" style="font-size: 1.8rem; margin-bottom: 8px;">Loading Event...</h1>
+        <p id="event-desc" class="text-muted" style="font-size: 0.95rem; margin-bottom: 16px;"></p>
+        
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.88rem; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 14px;">
+          <span id="event-date">🗓️ ...</span>
+          <span id="event-physical-seats">💺 ...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Capacity & Pool Breakdown Card -->
+    <div class="glass-card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 1.1rem;">⚡ Live Capacity & Availability</h3>
+        <span class="badge badge-cyan" id="live-indicator">● Realtime Sync</span>
+      </div>
+      <div id="capacity-pools-container">
+        <!-- Injected capacity bucket breakdown -->
+      </div>
+    </div>
+
+    <!-- Multi-Step Registration Card -->
+    <div class="glass-card" id="registration-card">
+      <h2 style="font-size: 1.35rem; margin-bottom: 6px;">Reserve Your Seat</h2>
+      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 20px;">Complete the 4-step registration form to secure your ticket.</p>
+
+      <!-- Wizard Progress Indicators -->
+      <div class="wizard-steps">
+        <div class="wizard-step-item active" id="wiz-step-1">
+          <div class="wizard-step-circle">1</div>
+          <span class="wizard-step-label">Department</span>
+        </div>
+        <div class="wizard-step-item" id="wiz-step-2">
+          <div class="wizard-step-circle">2</div>
+          <span class="wizard-step-label">Program</span>
+        </div>
+        <div class="wizard-step-item" id="wiz-step-3">
+          <div class="wizard-step-circle">3</div>
+          <span class="wizard-step-label">Year</span>
+        </div>
+        <div class="wizard-step-item" id="wiz-step-4">
+          <div class="wizard-step-circle">4</div>
+          <span class="wizard-step-label">Details</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Department -->
+      <div id="step-content-1" class="wizard-step-content">
+        <label class="form-label">Step 1: Select Your Department</label>
+        <div class="wizard-pill-group" id="dept-pills-group"></div>
+        <div style="margin-top: 24px; text-align: right;">
+          <button class="btn btn-primary" id="btn-next-1" disabled onclick="goToStep(2)">Next: Choose Program →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Program -->
+      <div id="step-content-2" class="wizard-step-content" style="display: none;">
+        <label class="form-label">Step 2: Select Your Program</label>
+        <div class="wizard-pill-group" id="prog-pills-group"></div>
+        <div style="margin-top: 24px; display: flex; justify-content: space-between;">
+          <button class="btn btn-secondary btn-sm" onclick="goToStep(1)">← Back</button>
+          <button class="btn btn-primary" id="btn-next-2" disabled onclick="goToStep(3)">Next: Choose Year →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Year -->
+      <div id="step-content-3" class="wizard-step-content" style="display: none;">
+        <label class="form-label">Step 3: Select Your Year</label>
+        <div class="wizard-pill-group" id="year-pills-group"></div>
+
+        <!-- Live resolved pool preview -->
+        <div id="resolved-bucket-banner" class="glass-card" style="margin-top: 20px; display: none; background: rgba(99, 102, 241, 0.08); border-color: var(--indigo-core);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Assigned Capacity Pool</div>
+              <div id="resolved-bucket-name" style="font-weight: 700; font-size: 1.05rem; color: #FFFFFF;">...</div>
+            </div>
+            <div id="resolved-bucket-badge" class="badge badge-published">...</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; justify-content: space-between;">
+          <button class="btn btn-secondary btn-sm" onclick="goToStep(2)">← Back</button>
+          <button class="btn btn-primary" id="btn-next-3" disabled onclick="goToStep(4)">Next: Student Details →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Student Details -->
+      <div id="step-content-4" class="wizard-step-content" style="display: none;">
+        <label class="form-label">Step 4: Your Personal Information</label>
+        
+        <form id="student-registration-form" onsubmit="handleRegistrationSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Name (Auto-Capitalized) *</label>
+            <input type="text" id="reg-name" required class="form-input" placeholder="e.g. ADRISH KUMAR BANERJEE" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-email">College Email Address *</label>
+            <input type="email" id="reg-email" required class="form-input" placeholder="e.g. adrish@university.edu">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Phone Number *</label>
+            <input type="tel" id="reg-phone" required class="form-input" placeholder="e.g. +91 98765 43210">
+          </div>
+
+          <div class="glass-card" style="margin-bottom: 20px; padding: 14px; background: rgba(255, 255, 255, 0.02);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Selected Category:</div>
+            <div id="reg-summary-text" style="font-weight: 600; color: #fff;">...</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="goToStep(3)">← Back</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-registration-btn">
+              <span>Confirm & Get Ticket 🚀</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/sse.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+
+    if (!eventId) {
+      window.location.href = '/';
+    }
+
+    let eventData = null;
+    let selectedDept = null;
+    let selectedProg = null;
+    let selectedYear = null;
+    let liveStream = null;
+
+    async function loadEventDetails() {
+      try {
+        const res = await API.get(`/events/${eventId}`);
+        eventData = res;
+        renderEventDetails();
+        renderCapacityPools();
+        renderStep1Depts();
+
+        if (!liveStream) {
+          liveStream = new CosmicLiveStream(eventId, (type, payload) => {
+            loadEventDetails();
+          });
+        }
+      } catch (err) {
+        Toast.error(err.message || 'Failed to load event details.');
+      }
+    }
+
+    function renderEventDetails() {
+      const { event, groupingExplanation } = eventData;
+      document.getElementById('event-title').textContent = event.name;
+      document.getElementById('event-desc').textContent = event.description;
+      document.getElementById('event-banner-img').src = event.banner_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
+      
+      const startDate = new Date(event.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      document.getElementById('event-date').textContent = `🗓️ ${startDate}`;
+      document.getElementById('event-physical-seats').textContent = `💺 Physical Capacity: ${event.total_physical_seats} Seats`;
+      document.getElementById('event-grouping-badge').textContent = groupingExplanation;
+    }
+
+    function renderCapacityPools() {
+      const { buckets } = eventData;
+      const container = document.getElementById('capacity-pools-container');
+
+      container.innerHTML = buckets.map(b => {
+        const remaining = Math.max(0, b.capacity - b.confirmed_count);
+        const percent = b.capacity > 0 ? Math.min(100, Math.round((b.confirmed_count / b.capacity) * 100)) : 0;
+        const statusBadge = remaining > 0 
+          ? `<span class="badge badge-published">${remaining} Seats Left</span>`
+          : `<span class="badge badge-waiting">Waitlist (#${b.waiting_count})</span>`;
+
+        return `
+          <div style="margin-bottom: 14px; padding: 12px 16px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 600; font-size: 0.92rem; color: #FFFFFF;">${b.display_name}</span>
+              ${statusBadge}
+            </div>
+            <div class="event-capacity-bar" style="margin: 8px 0 4px;">
+              <div class="event-capacity-fill" style="width: ${percent}%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted);">
+              <span>Confirmed: ${b.confirmed_count}/${b.capacity}</span>
+              <span>Waiting List: ${b.waiting_count}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderStep1Depts() {
+      const { eligibility } = eventData;
+      const depts = Array.from(new Set(eligibility.map(e => e.department)));
+      const container = document.getElementById('dept-pills-group');
+
+      container.innerHTML = depts.map(d => `
+        <div class="wizard-pill ${selectedDept === d ? 'selected' : ''}" onclick="selectDept('${d}')" id="pill-dept-${d}">
+          ${d}
+        </div>
+      `).join('');
+    }
+
+    function selectDept(dept) {
+      selectedDept = dept;
+      selectedProg = null;
+      selectedYear = null;
+      renderStep1Depts();
+      document.getElementById('btn-next-1').removeAttribute('disabled');
+      renderStep2Progs();
+    }
+
+    function renderStep2Progs() {
+      const { eligibility } = eventData;
+      const progs = Array.from(new Set(eligibility.filter(e => e.department === selectedDept).map(e => e.program)));
+      const container = document.getElementById('prog-pills-group');
+
+      container.innerHTML = progs.map(p => `
+        <div class="wizard-pill ${selectedProg === p ? 'selected' : ''}" onclick="selectProg('${p}')" id="pill-prog-${p.replace('.', '_')}">
+          ${p}
+        </div>
+      `).join('');
+      document.getElementById('btn-next-2').setAttribute('disabled', 'true');
+    }
+
+    function selectProg(prog) {
+      selectedProg = prog;
+      selectedYear = null;
+      renderStep2Progs();
+      document.getElementById('btn-next-2').removeAttribute('disabled');
+      renderStep3Years();
+    }
+
+    function renderStep3Years() {
+      const { eligibility } = eventData;
+      const years = Array.from(new Set(
+        eligibility.filter(e => e.department === selectedDept && e.program === selectedProg).map(e => e.year)
+      ));
+      const container = document.getElementById('year-pills-group');
+
+      container.innerHTML = years.map(y => `
+        <div class="wizard-pill ${selectedYear === y ? 'selected' : ''}" onclick="selectYear('${y}')" id="pill-year-${y.replace(/\s+/g, '')}">
+          ${y}
+        </div>
+      `).join('');
+      document.getElementById('btn-next-3').setAttribute('disabled', 'true');
+      document.getElementById('resolved-bucket-banner').style.display = 'none';
+    }
+
+    function selectYear(year) {
+      selectedYear = year;
+      renderStep3Years();
+      document.getElementById('btn-next-3').removeAttribute('disabled');
+      updateResolvedBucketPreview();
+    }
+
+    function updateResolvedBucketPreview() {
+      const { event, buckets } = eventData;
+      let parts = [];
+      if (event.group_dept) parts.push(`DEPT:${selectedDept}`);
+      if (event.group_prog) parts.push(`PROG:${selectedProg}`);
+      if (event.group_year) parts.push(`YEAR:${selectedYear}`);
+      const key = parts.length > 0 ? parts.join('|') : 'GLOBAL';
+
+      const bucket = buckets.find(b => b.bucket_key === key);
+      const banner = document.getElementById('resolved-bucket-banner');
+      banner.style.display = 'block';
+
+      if (bucket) {
+        document.getElementById('resolved-bucket-name').textContent = bucket.display_name;
+        const rem = Math.max(0, bucket.capacity - bucket.confirmed_count);
+        const badge = document.getElementById('resolved-bucket-badge');
+        if (rem > 0) {
+          badge.className = 'badge badge-published';
+          badge.textContent = `🟢 ${rem} Seats Remaining`;
+        } else {
+          badge.className = 'badge badge-waiting';
+          badge.textContent = `🟠 Full — Waiting List (#${bucket.waiting_count + 1})`;
+        }
+      }
+
+      document.getElementById('reg-summary-text').textContent = `${selectedDept} • ${selectedProg} • ${selectedYear}`;
+    }
+
+    function goToStep(stepNum) {
+      for (let i = 1; i <= 4; i++) {
+        const content = document.getElementById(`step-content-${i}`);
+        const indicator = document.getElementById(`wiz-step-${i}`);
+        if (i === stepNum) {
+          content.style.display = 'block';
+          indicator.classList.add('active');
+          indicator.classList.remove('completed');
+        } else if (i < stepNum) {
+          content.style.display = 'none';
+          indicator.classList.remove('active');
+          indicator.classList.add('completed');
+        } else {
+          content.style.display = 'none';
+          indicator.classList.remove('active');
+          indicator.classList.remove('completed');
+        }
+      }
+    }
+
+    async function handleRegistrationSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submit-registration-btn');
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.innerHTML = '<span>Processing Reservation... ⏳</span>';
+
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+
+      try {
+        const payload = {
+          name,
+          email,
+          phone,
+          department: selectedDept,
+          program: selectedProg,
+          year: selectedYear
+        };
+
+        const res = await API.post(`/events/${eventId}/register`, payload);
+        Toast.success(res.message);
+
+        if (res.data && res.data.referenceCode) {
+          localStorage.setItem('last_ticket_ref', res.data.referenceCode);
+          if (res.data.qrToken) {
+            localStorage.setItem(`qr_${res.data.referenceCode}`, res.data.qrToken);
+          }
+          setTimeout(() => {
+            window.location.href = `/ticket.html?ref=${res.data.referenceCode}`;
+          }, 1200);
+        }
+      } catch (err) {
+        Toast.error(err.message || 'Registration failed.');
+        submitBtn.removeAttribute('disabled');
+        submitBtn.innerHTML = '<span>Confirm & Get Ticket 🚀</span>';
+      }
+    }
+
+    loadEventDetails();
+  </script>
+</body>
+</html>

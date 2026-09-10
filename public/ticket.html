@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Digital Boarding Pass | CampusPass</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <style>
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      #ambient-canvas, .aurora-bg, .cosmic-nav, .search-box-card, .btn-action-row { display: none !important; }
+      .ticket-container { max-width: 100% !important; margin: 0 !important; }
+      .hologram-ticket { border: 2px solid #000 !important; box-shadow: none !important; color: #000 !important; background: #fff !important; }
+      .text-cyan, .text-purple, .text-gradient { color: #000 !important; -webkit-text-fill-color: initial !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Navigation -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">🎓</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">← Explore Events</a>
+        <a href="/ticket.html" class="nav-link active">Find Ticket</a>
+        <a href="/admin/index.html" class="btn btn-secondary btn-sm">Admin Portal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 24px; padding-bottom: 60px;">
+    <!-- Lookup Header & Search Box -->
+    <div class="glass-card search-box-card" style="max-width: 600px; margin: 0 auto 30px;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 8px;">Find Your Digital Boarding Pass</h2>
+      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 16px;">Enter your unique reference code to check your live registration, seat number, and QR ticket.</p>
+      
+      <form id="lookup-form" onsubmit="handleLookup(event)" style="display: flex; gap: 10px;">
+        <input type="text" id="lookup-ref-input" required class="form-input" placeholder="e.g. ADR-26-K7X9P2" style="text-transform: uppercase; font-family: monospace; letter-spacing: 0.05em; font-weight: 600;">
+        <button type="submit" class="btn btn-primary" id="lookup-btn">Search 🔍</button>
+      </form>
+    </div>
+
+    <!-- Ticket Result Area -->
+    <div id="ticket-wrapper" class="ticket-container" style="display: none;">
+      <div class="hologram-ticket" id="digital-ticket-card">
+        <!-- Banner Section -->
+        <div class="ticket-header">
+          <img id="ticket-event-banner" src="" alt="Banner" class="ticket-header-img">
+          <div class="ticket-header-overlay">
+            <span id="ticket-status-badge" class="badge badge-published">● CONFIRMED</span>
+            <h2 id="ticket-event-name" style="font-size: 1.25rem; margin-top: 6px; color: #fff;">Event Name</h2>
+          </div>
+        </div>
+
+        <!-- Ticket Tear Notches -->
+        <div class="ticket-notch-row">
+          <div class="ticket-notch-left"></div>
+          <div class="ticket-divider"></div>
+          <div class="ticket-notch-right"></div>
+        </div>
+
+        <!-- Ticket Core Body -->
+        <div class="ticket-body">
+          <!-- Student Identity -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Attendee Name</div>
+            <div id="ticket-student-name" style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">STUDENT NAME</div>
+            <div id="ticket-student-meta" style="font-size: 0.88rem; color: #38BDF8; font-weight: 600; margin-top: 2px;">CSE • B.Tech • 3rd Year</div>
+          </div>
+
+          <!-- Grid Meta Details -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; padding: 14px; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Assigned Seat</div>
+              <div id="ticket-seat-display" style="font-size: 1.2rem; font-weight: 800; color: var(--emerald-core);">Seat #--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Capacity Pool</div>
+              <div id="ticket-bucket-display" style="font-size: 0.92rem; font-weight: 600; color: #fff;">General Pool</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Reference Code</div>
+              <div id="ticket-ref-display" style="font-family: monospace; font-size: 0.92rem; font-weight: 700; color: var(--indigo-core);">ADR-XX-XXXX</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Check-In Status</div>
+              <div id="ticket-checkin-display" style="font-size: 0.88rem; font-weight: 700;">Not Checked In</div>
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+            <span>🗓️ Date & Time: </span><strong id="ticket-event-time" style="color: #fff;">...</strong>
+          </div>
+
+          <!-- Large Dynamic QR Code Center -->
+          <div style="text-align: center;">
+            <div class="ticket-qr-box">
+              <div id="qrcode-canvas-container"></div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 6px;">Cryptographic Entry Pass</div>
+          </div>
+
+          <!-- Prominent Required Ticket Warning -->
+          <div class="ticket-notice">
+            ⚠️ <strong>Check this ticket again before attending to see the latest seat number and registration status.</strong>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="btn-action-row" style="display: flex; gap: 10px; margin-top: 24px;">
+            <button onclick="window.print()" class="btn btn-secondary btn-block">🖨️ Print / Save Ticket</button>
+            <button onclick="copyReferenceCode()" class="btn btn-outline-cyan btn-block">📋 Copy Ref</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/qrcode.min.js"></script>
+  <script src="/js/sse.js"></script>
+  <script>
+    let currentReg = null;
+    let liveStream = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRef = urlParams.get('ref') || localStorage.getItem('last_ticket_ref');
+
+    if (initialRef) {
+      document.getElementById('lookup-ref-input').value = initialRef;
+      fetchTicketByReference(initialRef);
+    }
+
+    function handleLookup(e) {
+      e.preventDefault();
+      const ref = document.getElementById('lookup-ref-input').value.trim();
+      if (ref) {
+        fetchTicketByReference(ref);
+      }
+    }
+
+    async function fetchTicketByReference(refCode) {
+      const btn = document.getElementById('lookup-btn');
+      btn.setAttribute('disabled', 'true');
+      btn.textContent = 'Searching...';
+
+      try {
+        const res = await API.get(`/registrations/lookup/${encodeURIComponent(refCode)}`);
+        currentReg = res.registration;
+        renderTicket();
+        document.getElementById('ticket-wrapper').style.display = 'block';
+
+        if (!liveStream) {
+          liveStream = new CosmicLiveStream(currentReg.event.id, (type, payload) => {
+            fetchTicketByReference(refCode);
+          });
+        }
+      } catch (err) {
+        Toast.error(err.message || 'Ticket not found.');
+        document.getElementById('ticket-wrapper').style.display = 'none';
+      } finally {
+        btn.removeAttribute('disabled');
+        btn.textContent = 'Search 🔍';
+      }
+    }
+
+    function renderTicket() {
+      const r = currentReg;
+      document.getElementById('ticket-event-banner').src = r.event.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
+      document.getElementById('ticket-event-name').textContent = r.event.name;
+      document.getElementById('ticket-student-name').textContent = r.name;
+      document.getElementById('ticket-student-meta').textContent = `${r.department} • ${r.program} • ${r.year}`;
+      document.getElementById('ticket-bucket-display').textContent = r.bucketName;
+      document.getElementById('ticket-ref-display').textContent = r.referenceCode;
+
+      const startDate = new Date(r.event.startAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      document.getElementById('ticket-event-time').textContent = startDate;
+
+      const statusBadge = document.getElementById('ticket-status-badge');
+      const seatDisplay = document.getElementById('ticket-seat-display');
+
+      if (r.status === 'confirmed') {
+        statusBadge.className = 'badge badge-confirmed';
+        statusBadge.textContent = '● CONFIRMED';
+        seatDisplay.textContent = r.seatNumber ? `Seat #${r.seatNumber}` : 'Seat Assigned';
+        seatDisplay.className = 'text-emerald';
+      } else if (r.status === 'waiting') {
+        statusBadge.className = 'badge badge-waiting';
+        statusBadge.textContent = `🟠 WAITING LIST (#${r.waitingPosition})`;
+        seatDisplay.textContent = `Waitlist #${r.waitingPosition}`;
+        seatDisplay.className = 'text-amber';
+      } else {
+        statusBadge.className = 'badge badge-cancelled';
+        statusBadge.textContent = '🔴 CANCELLED';
+        seatDisplay.textContent = 'Cancelled';
+        seatDisplay.className = 'text-rose';
+      }
+
+      const checkinDisplay = document.getElementById('ticket-checkin-display');
+      if (r.isCheckedIn) {
+        checkinDisplay.innerHTML = `<span class="text-emerald">✓ Checked In (${new Date(r.checkedInAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})})</span>`;
+      } else {
+        checkinDisplay.innerHTML = `<span class="text-muted">Not Checked In</span>`;
+      }
+
+      const qrContainer = document.getElementById('qrcode-canvas-container');
+      qrContainer.innerHTML = '';
+      
+      const qrPayload = localStorage.getItem(`qr_${r.referenceCode}`) || r.referenceCode;
+
+      new QRCode(qrContainer, {
+        text: qrPayload,
+        width: 180,
+        height: 180,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    function copyReferenceCode() {
+      if (!currentReg) return;
+      navigator.clipboard.writeText(currentReg.referenceCode).then(() => {
+        Toast.success('Reference code copied to clipboard!');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Physical Seat Allocation Studio | CampusPass Admin</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Admin Nav -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/admin/index.html" class="brand-logo">
+        <div class="brand-icon">🛡️</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">SEAT STUDIO</span></span>
+      </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/admin/index.html" class="nav-link">← Dashboard</a>
+        <a href="/admin/registrations.html" class="btn btn-secondary btn-sm">Students</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 24px; padding-bottom: 70px;">
+    <!-- Event Selector Card -->
+    <div class="glass-card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div style="flex-grow: 1; min-width: 260px;">
+          <label class="form-label" for="seat-event-select">Select Event to Allocate Physical Seats</label>
+          <select id="seat-event-select" class="form-select" onchange="onEventSelectChanged()">
+            <option value="">Loading events...</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: flex-end;">
+          <button onclick="loadSeatConfiguration()" class="btn btn-secondary btn-sm">🔄 Refresh Map</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Allocation Config on Left, Live Grid on Right -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+      <!-- Allocation Form -->
+      <div class="glass-card">
+        <h2 style="font-size: 1.25rem; margin-bottom: 6px;">Assign Physical Seat Ranges</h2>
+        <p class="text-muted" style="font-size: 0.82rem; margin-bottom: 18px;">Specify total physical seats and assign comma-separated ranges (e.g. <code style="color: #38BDF8;">1-20, 25, 30-35</code>) to each capacity bucket.</p>
+
+        <form id="seat-config-form" onsubmit="saveSeatAllocations(event)">
+          <div class="form-group">
+            <label class="form-label" for="total-physical-seats-input">Total Physical Seats in Hall/Auditorium *</label>
+            <input type="number" id="total-physical-seats-input" min="1" max="1000" class="form-input" required placeholder="e.g. 100">
+          </div>
+
+          <h3 style="font-size: 1rem; margin: 16px 0 10px; color: #fff;">Capacity Buckets Seat Ranges</h3>
+          <div id="bucket-ranges-container">
+            <!-- Dynamic range inputs per bucket -->
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-save-seats" style="margin-top: 20px;">
+            Apply & Lock Seat Map 💺
+          </button>
+        </form>
+      </div>
+
+      <!-- Live Interactive Visual Seat Map -->
+      <div class="glass-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 1.25rem;">Live Seat Map Grid</h2>
+          <span class="badge badge-purple" id="seat-map-total-badge">0 Seats</span>
+        </div>
+
+        <!-- Legend -->
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.78rem; margin-bottom: 14px;">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(16, 185, 129, 0.3); border: 1px solid var(--emerald-core);"></span>
+            <span>Available</span>
+          </span>
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(236, 72, 153, 0.4); border: 1px solid var(--pink-core);"></span>
+            <span>Occupied</span>
+          </span>
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);"></span>
+            <span>Unassigned Pool</span>
+          </span>
+        </div>
+
+        <div id="seat-grid-map" class="seat-grid-container">
+          <div class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 30px;">Select an event to load seat grid.</div>
+        </div>
+
+        <!-- Seat Click Inspector Sheet -->
+        <div id="seat-detail-inspector" style="margin-top: 18px; padding: 14px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass); display: none;">
+          <div style="font-weight: 700; font-size: 1.05rem; color: #38BDF8;" id="inspect-seat-title">Seat #--</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="inspect-seat-bucket">Pool: --</div>
+          <div style="font-size: 0.85rem; color: #fff; margin-top: 4px;" id="inspect-seat-occupant">Status: Available</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    let currentEventId = null;
+    let eventDetails = null;
+
+    async function loadEventsDropdown() {
+      try {
+        const res = await API.get('/events/admin/all');
+        const select = document.getElementById('seat-event-select');
+        const events = res.events || [];
+
+        if (events.length === 0) {
+          select.innerHTML = '<option value="">No events found</option>';
+          document.getElementById('seat-grid-map').innerHTML = '<div class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 30px;">No events in database. Create an event first.</div>';
+          return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramId = urlParams.get('eventId');
+
+        select.innerHTML = events.map(e => `
+          <option value="${e.id}" ${paramId == e.id ? 'selected' : ''}>
+            ${e.name} (${e.total_physical_seats || 0} Physical Seats)
+          </option>
+        `).join('');
+
+        currentEventId = select.value;
+        loadSeatConfiguration();
+      } catch (err) {
+        Toast.error('Failed to load events.');
+      }
+    }
+
+    function onEventSelectChanged() {
+      currentEventId = document.getElementById('seat-event-select').value;
+      loadSeatConfiguration();
+    }
+
+    async function loadSeatConfiguration() {
+      if (!currentEventId) return;
+
+      try {
+        eventDetails = await API.get(`/events/${currentEventId}`);
+        const { event, buckets } = eventDetails;
+
+        document.getElementById('total-physical-seats-input').value = event.total_physical_seats || 100;
+
+        const seatRes = await API.get(`/events/${currentEventId}/seats`);
+        const seats = seatRes.seats || [];
+
+        const bucketSeatMap = new Map();
+        for (const s of seats) {
+          if (s.capacity_bucket_id) {
+            if (!bucketSeatMap.has(s.capacity_bucket_id)) bucketSeatMap.set(s.capacity_bucket_id, []);
+            bucketSeatMap.get(s.capacity_bucket_id).push(s.seat_number);
+          }
+        }
+
+        const container = document.getElementById('bucket-ranges-container');
+        container.innerHTML = buckets.map(b => {
+          const assignedSeats = bucketSeatMap.get(b.id) || [];
+          const rangeString = formatSeatArrayToRanges(assignedSeats);
+
+          return `
+            <div style="margin-bottom: 14px; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <strong style="color: #fff; font-size: 0.92rem;">${b.display_name}</strong>
+                <span class="badge badge-cyan">Cap: ${b.capacity}</span>
+              </div>
+              <input type="text" class="form-input bucket-range-input" data-bucket-id="${b.id}" value="${rangeString}" placeholder="e.g. 1-20, 25, 30-35" style="font-family: monospace;">
+            </div>
+          `;
+        }).join('');
+
+        renderSeatGrid(seats);
+      } catch (err) {
+        Toast.error(err.message || 'Failed to load seat data.');
+      }
+    }
+
+    function formatSeatArrayToRanges(arr) {
+      if (!arr || arr.length === 0) return '';
+      const sorted = [...arr].sort((a, b) => a - b);
+      const ranges = [];
+      let start = sorted[0];
+      let end = sorted[0];
+
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === end + 1) {
+          end = sorted[i];
+        } else {
+          ranges.push(start === end ? `${start}` : `${start}-${end}`);
+          start = end = sorted[i];
+        }
+      }
+      ranges.push(start === end ? `${start}` : `${start}-${end}`);
+      return ranges.join(', ');
+    }
+
+    function renderSeatGrid(seats) {
+      const grid = document.getElementById('seat-grid-map');
+      document.getElementById('seat-map-total-badge').textContent = `${seats.length} Physical Seats`;
+
+      if (seats.length === 0) {
+        grid.innerHTML = '<div class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 30px;">No physical seats configured yet. Click "Apply & Lock Seat Map" to generate.</div>';
+        return;
+      }
+
+      grid.innerHTML = seats.map(s => {
+        let cls = 'seat-unassigned';
+        let occupant = 'Available';
+
+        if (s.seat_status === 'allocated' && s.registration_id) {
+          cls = 'seat-allocated';
+          occupant = `${s.student_name} (${s.reference_code || 'Assigned'})`;
+        } else if (s.capacity_bucket_id) {
+          cls = 'seat-available';
+        }
+
+        const bucketText = s.bucket_name || 'Unassigned';
+
+        return `
+          <div class="seat-node ${cls}" onclick="inspectSeat(${s.seat_number}, '${bucketText.replace(/'/g, "\\'")}', '${occupant.replace(/'/g, "\\'")}', '${cls}')" title="Seat #${s.seat_number}: ${bucketText} (${occupant})">
+            ${s.seat_number}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function inspectSeat(num, bucket, occupant, cls) {
+      const inspector = document.getElementById('seat-detail-inspector');
+      inspector.style.display = 'block';
+      document.getElementById('inspect-seat-title').textContent = `Seat #${num}`;
+      document.getElementById('inspect-seat-bucket').textContent = `Assigned Pool: ${bucket}`;
+      document.getElementById('inspect-seat-occupant').innerHTML = `Occupant: <strong>${occupant}</strong>`;
+    }
+
+    async function saveSeatAllocations(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-seats');
+      btn.setAttribute('disabled', 'true');
+      btn.textContent = 'Allocating Seats... ⏳';
+
+      try {
+        const totalPhysicalSeats = parseInt(document.getElementById('total-physical-seats-input').value, 10);
+        const bucketAllocations = [];
+
+        document.querySelectorAll('.bucket-range-input').forEach(inp => {
+          bucketAllocations.push({
+            bucketId: parseInt(inp.dataset.bucketId, 10),
+            rangeStr: inp.value.trim()
+          });
+        });
+
+        const res = await API.post(`/admin/events/${currentEventId}/seats/configure`, {
+          totalPhysicalSeats,
+          bucketAllocations
+        });
+
+        Toast.success(res.message);
+        loadSeatConfiguration();
+      } catch (err) {
+        Toast.error(err.message || 'Seat allocation failed.');
+      } finally {
+        btn.removeAttribute('disabled');
+        btn.textContent = 'Apply & Lock Seat Map 💺';
+      }
+    }
+
+    loadEventsDropdown();
+  </script>
+</body>
+</html>

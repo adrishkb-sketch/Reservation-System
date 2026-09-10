@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Universal QR Scanner | CampusPass Admin</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Admin Nav -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/admin/index.html" class="brand-logo">
+        <div class="brand-icon">📷</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">SCANNER</span></span>
+      </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/admin/index.html" class="nav-link">← Dashboard</a>
+        <a href="/admin/stats.html" class="btn btn-secondary btn-sm">📊 Stats</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container container-narrow" style="padding-top: 20px; padding-bottom: 70px;">
+    <!-- Event Selector -->
+    <div class="glass-card" style="margin-bottom: 20px; padding: 14px 18px;">
+      <label class="form-label" for="scanner-event-select">Active Event Verification Filter</label>
+      <select id="scanner-event-select" class="form-select">
+        <option value="">Any Event (Auto-Detect from Ticket)</option>
+      </select>
+    </div>
+
+    <!-- Scanner Viewport Box -->
+    <div class="glass-card" style="padding: 16px; text-align: center; margin-bottom: 24px;">
+      <div class="scanner-viewport-box" id="scanner-viewport">
+        <div id="reader"></div>
+        <div class="scanner-laser"></div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+        <button onclick="startScanner()" class="btn btn-primary btn-sm" id="btn-start-scanner">▶ Start Camera</button>
+        <button onclick="stopScanner()" class="btn btn-secondary btn-sm" id="btn-stop-scanner" style="display: none;">⏹ Stop Camera</button>
+      </div>
+
+      <!-- Manual QR Token / Ref Fallback Input -->
+      <div style="margin-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 14px;">
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 8px;">Or verify by entering Reference Code / Token manually:</p>
+        <form onsubmit="handleManualVerify(event)" style="display: flex; gap: 8px;">
+          <input type="text" id="manual-token-input" class="form-input" placeholder="e.g. ADR-26-K7X9P2..." style="font-family: monospace; font-size: 0.88rem;">
+          <button type="submit" class="btn btn-outline-cyan btn-sm">Verify</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Check-In Result Pop-Up Card -->
+    <div id="scan-result-container" class="glass-card" style="display: none; margin-bottom: 24px;">
+      <div id="scan-result-inner" class="scan-result-card">
+        <!-- Injected status details -->
+      </div>
+      <div style="text-align: center; margin-top: 10px;">
+        <button onclick="dismissScanResult()" class="btn btn-secondary btn-sm">Scan Next Ticket ➔</button>
+      </div>
+    </div>
+
+    <!-- Live Check-In Stream History Feed -->
+    <div class="glass-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1.1rem;">Live Check-In Activity Feed</h3>
+        <span class="badge badge-cyan" id="live-checkin-count">0 Checked In</span>
+      </div>
+      <div id="check-in-history-list" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <div class="text-muted" style="font-size: 0.85rem; text-align: center; padding: 20px;">Ready to scan attendees.</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-nav-bar">
+    <div class="mobile-nav-grid">
+      <a href="/admin/index.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">📊</span>
+        <span>Overview</span>
+      </a>
+      <a href="/admin/events.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">📅</span>
+        <span>Events</span>
+      </a>
+      <a href="/admin/registrations.html" class="mobile-nav-item">
+        <span class="mobile-nav-icon">👥</span>
+        <span>Students</span>
+      </a>
+      <a href="/admin/scanner.html" class="mobile-nav-item active">
+        <span class="mobile-nav-icon">📷</span>
+        <span>Scanner</span>
+      </a>
+    </div>
+  </nav>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/html5-qrcode.min.js"></script>
+  <script>
+    let html5QrCode = null;
+    let isScanning = false;
+    let lastScannedToken = null;
+    let scanCooldown = false;
+    let checkInHistory = [];
+
+    function playBeep(type = 'success') {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'warning') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(370, audioCtx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } else {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(160, audioCtx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        if (navigator.vibrate) {
+          if (type === 'success') navigator.vibrate([80, 50, 80]);
+          else navigator.vibrate([200, 100, 200]);
+        }
+      } catch (e) {}
+    }
+
+    async function loadEventsDropdown() {
+      try {
+        const res = await API.get('/events/admin/all');
+        const select = document.getElementById('scanner-event-select');
+        (res.events || []).forEach(e => {
+          const opt = document.createElement('option');
+          opt.value = e.id;
+          opt.textContent = e.name;
+          select.appendChild(opt);
+        });
+      } catch (err) {}
+    }
+
+    function startScanner() {
+      if (isScanning) return;
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanFailure
+      ).then(() => {
+        isScanning = true;
+        document.getElementById('btn-start-scanner').style.display = 'none';
+        document.getElementById('btn-stop-scanner').style.display = 'inline-block';
+        Toast.info('Camera scanner active.');
+      }).catch(err => {
+        Toast.error(`Camera error: ${err}`);
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
+          isScanning = false;
+          document.getElementById('btn-start-scanner').style.display = 'inline-block';
+          document.getElementById('btn-stop-scanner').style.display = 'none';
+        });
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (scanCooldown || decodedText === lastScannedToken) return;
+      scanCooldown = true;
+      lastScannedToken = decodedText;
+
+      verifyQrToken(decodedText);
+
+      setTimeout(() => {
+        scanCooldown = false;
+        lastScannedToken = null;
+      }, 3000);
+    }
+
+    function onScanFailure(error) {}
+
+    function handleManualVerify(e) {
+      e.preventDefault();
+      const val = document.getElementById('manual-token-input').value.trim();
+      if (val) {
+        verifyQrToken(val);
+      }
+    }
+
+    async function verifyQrToken(token) {
+      const selectedEventId = document.getElementById('scanner-event-select').value;
+      const resultBox = document.getElementById('scan-result-container');
+      const resultInner = document.getElementById('scan-result-inner');
+
+      try {
+        const res = await API.post('/admin/check-in/scan', {
+          token,
+          eventId: selectedEventId || undefined
+        });
+
+        playBeep('success');
+        const st = res.student;
+
+        resultInner.innerHTML = `
+          <div class="scan-icon-bubble scan-success-bubble">✓</div>
+          <h2 style="color: var(--emerald-core); font-size: 1.5rem; margin-bottom: 4px;">CHECK-IN SUCCESSFUL</h2>
+          <div style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-top: 8px;">${st.name}</div>
+          <div style="font-size: 0.9rem; color: #38BDF8; font-weight: 600;">${st.department} • ${st.program} • ${st.year}</div>
+          <div style="font-size: 1.35rem; font-weight: 800; color: var(--emerald-core); margin-top: 10px;">
+            💺 Assigned Seat #${st.seatNumber || 'N/A'}
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+            Ref: <strong style="color: #fff;">${st.referenceCode}</strong> | Time: ${new Date(st.checkedInAt).toLocaleTimeString()}
+          </div>
+        `;
+        resultBox.style.display = 'block';
+
+        addCheckInHistory({
+          name: st.name,
+          seat: st.seatNumber,
+          ref: st.referenceCode,
+          time: new Date().toLocaleTimeString(),
+          status: 'SUCCESS'
+        });
+
+      } catch (err) {
+        const msg = err.message || 'Verification failed';
+        
+        if (msg.includes('ALREADY CHECKED IN')) {
+          playBeep('warning');
+          resultInner.innerHTML = `
+            <div class="scan-icon-bubble scan-warning-bubble">⚠️</div>
+            <h2 style="color: var(--amber-core); font-size: 1.4rem;">ALREADY CHECKED IN</h2>
+            <p style="color: #fff; font-size: 0.95rem; margin-top: 8px;">${msg}</p>
+          `;
+        } else if (msg.includes('WAITING LIST')) {
+          playBeep('danger');
+          resultInner.innerHTML = `
+            <div class="scan-icon-bubble scan-danger-bubble">✕</div>
+            <h2 style="color: var(--rose-core); font-size: 1.4rem;">INVALID / NOT ELIGIBLE FOR ENTRY</h2>
+            <p style="color: #FCD34D; font-size: 0.95rem; margin-top: 8px;">Attendee is currently on the <strong>WAITING LIST</strong>. Entry not permitted.</p>
+          `;
+        } else {
+          playBeep('danger');
+          resultInner.innerHTML = `
+            <div class="scan-icon-bubble scan-danger-bubble">✕</div>
+            <h2 style="color: var(--rose-core); font-size: 1.4rem;">INVALID / NOT ELIGIBLE FOR ENTRY</h2>
+            <p style="color: var(--rose-core); font-size: 0.9rem; margin-top: 8px;">${msg}</p>
+          `;
+        }
+        resultBox.style.display = 'block';
+      }
+    }
+
+    function dismissScanResult() {
+      document.getElementById('scan-result-container').style.display = 'none';
+      document.getElementById('manual-token-input').value = '';
+    }
+
+    function addCheckInHistory(item) {
+      checkInHistory.unshift(item);
+      const container = document.getElementById('check-in-history-list');
+      document.getElementById('live-checkin-count').textContent = `${checkInHistory.length} Checked In`;
+
+      container.innerHTML = checkInHistory.map(ch => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+          <div>
+            <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">${ch.name}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Ref: ${ch.ref} | 💺 Seat #${ch.seat || 'N/A'}</div>
+          </div>
+          <span class="badge badge-published" style="font-size: 0.75rem;">${ch.time}</span>
+        </div>
+      `).join('');
+    }
+
+    loadEventsDropdown();
+  </script>
+</body>
+</html>

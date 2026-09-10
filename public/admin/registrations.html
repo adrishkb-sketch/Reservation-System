@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Registrations Hub | CampusPass Admin</title>
+  <link rel="stylesheet" href="/css/cosmic.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <div class="aurora-bg"></div>
+
+  <!-- Admin Nav -->
+  <header class="cosmic-nav">
+    <div class="container nav-content">
+      <a href="/admin/index.html" class="brand-logo">
+        <div class="brand-icon">👥</div>
+        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">STUDENTS</span></span>
+      </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="/admin/index.html" class="nav-link">← Dashboard</a>
+        <a href="/admin/stats.html" class="btn btn-secondary btn-sm">📊 Stats</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 24px; padding-bottom: 70px;">
+    <!-- Event Selector & Search Filters -->
+    <div class="glass-card" style="margin-bottom: 24px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+        <div>
+          <label class="form-label" for="reg-event-select">Event</label>
+          <select id="reg-event-select" class="form-select" onchange="onEventChanged()">
+            <option value="">Loading events...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="search-input">Search Student / Ref / Email</label>
+          <input type="text" id="search-input" class="form-input" placeholder="Search by name, ref, email, phone..." oninput="debounceSearch()">
+        </div>
+
+        <div>
+          <label class="form-label" for="filter-status">Status</label>
+          <select id="filter-status" class="form-select" onchange="loadRegistrations()">
+            <option value="">All Statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="waiting">Waiting List</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="filter-dept">Department</label>
+          <select id="filter-dept" class="form-select" onchange="loadRegistrations()">
+            <option value="">All Depts</option>
+            <option value="CSE">CSE</option>
+            <option value="IT">IT</option>
+            <option value="CT">CT</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label" for="filter-year">Year</label>
+          <select id="filter-year" class="form-select" onchange="loadRegistrations()">
+            <option value="">All Years</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registrations Summary & Export Row -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h2 style="font-size: 1.25rem;">Registrations (<span id="total-reg-count">0</span>)</h2>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="exportCsv()" class="btn btn-secondary btn-sm">📥 Export CSV</button>
+        <button onclick="loadRegistrations()" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Registrations Cards List (Mobile-First) -->
+    <div id="registrations-list-container">
+      <div class="glass-card text-muted" style="text-align: center; padding: 40px;">Loading registrations...</div>
+    </div>
+  </main>
+
+  <!-- Modal: Manual Seat Reassignment & Collision Warning -->
+  <div id="seat-modal-overlay" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3 style="font-size: 1.3rem; margin-bottom: 6px;">Manual Seat Reassignment</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 18px;" id="modal-student-name-text">Reassign seat for student.</p>
+
+      <form id="seat-reassign-form" onsubmit="handleSeatReassignSubmit(event)">
+        <input type="hidden" id="modal-reg-id">
+        <div class="form-group">
+          <label class="form-label" for="modal-seat-number-input">Target Physical Seat Number *</label>
+          <input type="number" id="modal-seat-number-input" min="1" max="1000" required class="form-input" placeholder="e.g. 42">
+        </div>
+
+        <!-- Collision Warning Banner -->
+        <div id="collision-warning-box" style="display: none; padding: 14px; background: rgba(245, 158, 11, 0.12); border: 1px solid var(--amber-core); border-radius: var(--radius-md); margin-bottom: 18px;">
+          <div style="font-weight: 700; color: var(--amber-core); font-size: 0.92rem;">⚠️ Seat Occupied Warning</div>
+          <p id="collision-warning-msg" style="font-size: 0.85rem; color: #fff; margin-top: 4px;"></p>
+          <div style="margin-top: 10px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: #FCD34D;">
+              <input type="checkbox" id="modal-force-swap-checkbox">
+              <span>Yes, swap/reassign this seat anyway and update audit log</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" onclick="closeSeatModal()" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-confirm-reassign">Assign Seat 💺</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Student Details -->
+  <div id="edit-modal-overlay" class="modal-overlay">
+    <div class="modal-sheet">
+      <h3 style="font-size: 1.3rem; margin-bottom: 6px;">Edit Student Information</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 18px;">Update contact details. Changes are tracked in audit logs.</p>
+
+      <form id="edit-details-form" onsubmit="handleEditDetailsSubmit(event)">
+        <input type="hidden" id="edit-modal-reg-id">
+        <div class="form-group">
+          <label class="form-label" for="edit-modal-name">Full Name *</label>
+          <input type="text" id="edit-modal-name" required class="form-input" style="text-transform: uppercase;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-modal-email">Email Address *</label>
+          <input type="email" id="edit-modal-email" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-modal-phone">Phone Number *</label>
+          <input type="tel" id="edit-modal-phone" required class="form-input">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    let currentEventId = null;
+    let searchTimer = null;
+
+    async function loadEventsDropdown() {
+      try {
+        const res = await API.get('/events/admin/all');
+        const select = document.getElementById('reg-event-select');
+        const events = res.events || [];
+
+        if (events.length === 0) {
+          select.innerHTML = '<option value="">No events</option>';
+          document.getElementById('registrations-list-container').innerHTML = '<div class="glass-card text-muted" style="text-align: center; padding: 40px;">No events in database.</div>';
+          return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramId = urlParams.get('eventId');
+
+        select.innerHTML = events.map(e => `
+          <option value="${e.id}" ${paramId == e.id ? 'selected' : ''}>
+            ${e.name}
+          </option>
+        `).join('');
+
+        currentEventId = select.value;
+        loadRegistrations();
+      } catch (err) {
+        Toast.error('Failed to load events.');
+      }
+    }
+
+    function onEventChanged() {
+      currentEventId = document.getElementById('reg-event-select').value;
+      loadRegistrations();
+    }
+
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        loadRegistrations();
+      }, 300);
+    }
+
+    async function loadRegistrations() {
+      if (!currentEventId) return;
+
+      const container = document.getElementById('registrations-list-container');
+      const search = document.getElementById('search-input').value.trim();
+      const status = document.getElementById('filter-status').value;
+      const dept = document.getElementById('filter-dept').value;
+      const year = document.getElementById('filter-year').value;
+
+      try {
+        const queryParams = new URLSearchParams();
+        if (search) queryParams.append('search', search);
+        if (status) queryParams.append('status', status);
+        if (dept) queryParams.append('department', dept);
+        if (year) queryParams.append('year', year);
+
+        const res = await API.get(`/admin/events/${currentEventId}/registrations?${queryParams.toString()}`);
+        const list = res.registrations || [];
+        document.getElementById('total-reg-count').textContent = list.length;
+
+        if (list.length === 0) {
+          container.innerHTML = '<div class="glass-card text-muted" style="text-align: center; padding: 40px;">No registrations found for this event.</div>';
+          return;
+        }
+
+        container.innerHTML = list.map(reg => {
+          let statusBadge = '<span class="badge badge-confirmed">● CONFIRMED</span>';
+          let seatText = reg.seat_number ? `<strong class="text-emerald">Seat #${reg.seat_number}</strong>` : '<span class="text-dim">No Seat</span>';
+
+          if (reg.status === 'waiting') {
+            statusBadge = `<span class="badge badge-waiting">🟠 WAITING (#${reg.waiting_position})</span>`;
+            seatText = `<span class="text-amber">Queue Pos #${reg.waiting_position}</span>`;
+          } else if (reg.status === 'cancelled') {
+            statusBadge = '<span class="badge badge-cancelled">🔴 CANCELLED</span>';
+            seatText = '<span class="text-rose">Cancelled</span>';
+          }
+
+          const checkInBadge = reg.is_checked_in 
+            ? `<span class="badge badge-success">✓ Checked In</span>` 
+            : `<span class="badge badge-purple" style="opacity: 0.6;">Not Checked In</span>`;
+
+          return `
+            <div class="student-card" id="student-card-${reg.id}">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+                <div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    ${statusBadge}
+                    ${checkInBadge}
+                    <span style="font-family: monospace; font-size: 0.82rem; color: #38BDF8; font-weight: 700;">${reg.reference_code}</span>
+                  </div>
+                  <h3 style="font-size: 1.15rem; margin-top: 6px; color: #fff;">${reg.name}</h3>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+                    ${reg.department} • ${reg.program} • ${reg.year} | <span style="color: var(--text-dim);">${reg.bucket_name}</span>
+                  </div>
+                  <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                    📧 ${reg.email} | 📞 ${reg.phone}
+                  </div>
+                </div>
+
+                <div style="text-align: right;">
+                  <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Assigned Seat</div>
+                  <div style="font-size: 1.1rem; margin-top: 2px;">${seatText}</div>
+                </div>
+              </div>
+
+              <!-- Action Toolbar -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 10px;">
+                <a href="/ticket.html?ref=${reg.reference_code}" target="_blank" class="btn btn-secondary btn-sm">🎫 View Ticket</a>
+                <button onclick="openEditModal(${reg.id}, '${reg.name.replace(/'/g, "\\'")}', '${reg.email}', '${reg.phone}')" class="btn btn-secondary btn-sm">✏️ Edit</button>
+                
+                ${reg.status === 'confirmed' ? `
+                  <button onclick="openSeatModal(${reg.id}, '${reg.name.replace(/'/g, "\\'")}', ${reg.seat_number || 'null'})" class="btn btn-outline-cyan btn-sm">💺 Change Seat</button>
+                ` : ''}
+
+                ${reg.status === 'waiting' ? `
+                  <button onclick="promoteStudent(${reg.id})" class="btn btn-primary btn-sm">⚡ Promote to Confirmed</button>
+                ` : ''}
+
+                ${reg.status !== 'cancelled' ? `
+                  <button onclick="cancelStudent(${reg.id}, '${reg.reference_code}')" class="btn btn-danger btn-sm">Cancel</button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="text-rose">Error loading registrations: ${err.message}</div>`;
+      }
+    }
+
+    async function promoteStudent(regId) {
+      if (!confirm('Promote this waiting student to Confirmed status now?')) return;
+      try {
+        const res = await API.post(`/admin/events/${currentEventId}/registrations/${regId}/promote`, {});
+        Toast.success(res.message);
+        loadRegistrations();
+      } catch (err) {
+        Toast.error(err.message || 'Promotion failed.');
+      }
+    }
+
+    async function cancelStudent(regId, refCode) {
+      const reason = prompt(`Reason for cancelling registration ${refCode}?`, 'Cancelled by Admin');
+      if (reason === null) return;
+
+      try {
+        const res = await API.post(`/admin/events/${currentEventId}/registrations/${regId}/cancel`, { reason });
+        Toast.success(res.message);
+        loadRegistrations();
+      } catch (err) {
+        Toast.error(err.message || 'Cancellation failed.');
+      }
+    }
+
+    function openSeatModal(regId, name, currentSeat) {
+      document.getElementById('modal-reg-id').value = regId;
+      document.getElementById('modal-student-name-text').textContent = `Reassign seat for ${name} (Current: ${currentSeat ? 'Seat #' + currentSeat : 'None'})`;
+      document.getElementById('modal-seat-number-input').value = currentSeat || '';
+      document.getElementById('collision-warning-box').style.display = 'none';
+      document.getElementById('modal-force-swap-checkbox').checked = false;
+      document.getElementById('seat-modal-overlay').classList.add('active');
+    }
+
+    function closeSeatModal() {
+      document.getElementById('seat-modal-overlay').classList.remove('active');
+    }
+
+    async function handleSeatReassignSubmit(e) {
+      e.preventDefault();
+      const regId = document.getElementById('modal-reg-id').value;
+      const targetSeat = document.getElementById('modal-seat-number-input').value;
+      const forceSwap = document.getElementById('modal-force-swap-checkbox').checked;
+
+      try {
+        const res = await API.post(`/admin/events/${currentEventId}/seats/reassign`, {
+          registrationId: regId,
+          targetSeatNumber: targetSeat,
+          forceSwap
+        });
+
+        if (res.collision) {
+          document.getElementById('collision-warning-box').style.display = 'block';
+          document.getElementById('collision-warning-msg').textContent = res.message;
+          return;
+        }
+
+        Toast.success(res.message);
+        closeSeatModal();
+        loadRegistrations();
+      } catch (err) {
+        Toast.error(err.message || 'Seat reassignment failed.');
+      }
+    }
+
+    function openEditModal(regId, name, email, phone) {
+      document.getElementById('edit-modal-reg-id').value = regId;
+      document.getElementById('edit-modal-name').value = name;
+      document.getElementById('edit-modal-email').value = email;
+      document.getElementById('edit-modal-phone').value = phone;
+      document.getElementById('edit-modal-overlay').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal-overlay').classList.remove('active');
+    }
+
+    async function handleEditDetailsSubmit(e) {
+      e.preventDefault();
+      const regId = document.getElementById('edit-modal-reg-id').value;
+      const name = document.getElementById('edit-modal-name').value;
+      const email = document.getElementById('edit-modal-email').value;
+      const phone = document.getElementById('edit-modal-phone').value;
+
+      try {
+        const res = await API.put(`/admin/events/${currentEventId}/registrations/${regId}/details`, {
+          name, email, phone
+        });
+        Toast.success(res.message);
+        closeEditModal();
+        loadRegistrations();
+      } catch (err) {
+        Toast.error(err.message || 'Update failed.');
+      }
+    }
+
+    function exportCsv() {
+      if (!currentEventId) return;
+      window.location.href = `/api/admin/events/${currentEventId}/export-csv`;
+    }
+
+    loadEventsDropdown();
+  </script>
+</body>
+</html>

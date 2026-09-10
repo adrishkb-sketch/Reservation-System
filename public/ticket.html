@@ -8,11 +8,40 @@
   <link rel="stylesheet" href="/css/components.css">
   <style>
     @media print {
-      body { background: #fff !important; color: #000 !important; }
-      #ambient-canvas, .aurora-bg, .cosmic-nav, .search-box-card, .btn-action-row { display: none !important; }
-      .ticket-container { max-width: 100% !important; margin: 0 !important; }
-      .hologram-ticket { border: 2px solid #000 !important; box-shadow: none !important; color: #000 !important; background: #fff !important; }
-      .text-cyan, .text-purple, .text-gradient { color: #000 !important; -webkit-text-fill-color: initial !important; }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      #ambient-canvas, .aurora-bg, .cosmic-nav, .search-box-card, .btn-action-row, .mobile-nav-bar {
+        display: none !important;
+      }
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .ticket-container {
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-shadow: none !important;
+      }
+      .hologram-ticket {
+        border: 2px solid #000000 !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+        background: #ffffff !important;
+      }
+      .hologram-ticket h2, .hologram-ticket h3, .hologram-ticket strong {
+        color: #000000 !important;
+      }
+      .text-cyan, .text-purple, .text-gradient, #ticket-student-name, #ticket-event-time {
+        color: #000000 !important;
+        -webkit-text-fill-color: initial !important;
+      }
+      .ticket-qr-box {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+      }
     }
   </style>
 </head>
@@ -51,7 +80,7 @@
       <div class="hologram-ticket" id="digital-ticket-card">
         <!-- Banner Section -->
         <div class="ticket-header">
-          <img id="ticket-event-banner" src="" alt="Banner" class="ticket-header-img">
+          <img id="ticket-event-banner" src="" alt="Banner" class="ticket-header-img" crossOrigin="anonymous">
           <div class="ticket-header-overlay">
             <span id="ticket-status-badge" class="badge badge-published">● CONFIRMED</span>
             <h2 id="ticket-event-name" style="font-size: 1.25rem; margin-top: 6px; color: #fff;">Event Name</h2>
@@ -112,10 +141,17 @@
             ⚠️ <strong>Check this ticket again before attending to see the latest seat number and registration status.</strong>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="btn-action-row" style="display: flex; gap: 10px; margin-top: 24px;">
-            <button onclick="window.print()" class="btn btn-secondary btn-block">🖨️ Print / Save Ticket</button>
-            <button onclick="copyReferenceCode()" class="btn btn-outline-cyan btn-block">📋 Copy Ref</button>
+          <!-- Action Buttons (Print, Download as Image, Copy Ref) -->
+          <div class="btn-action-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px;">
+            <button type="button" onclick="printTicket()" class="btn btn-secondary" id="btn-print-ticket">
+              🖨️ Print Ticket
+            </button>
+            <button type="button" onclick="downloadTicketImage()" class="btn btn-primary" id="btn-save-ticket">
+              💾 Save Image (PNG)
+            </button>
+            <button type="button" onclick="copyReferenceCode()" class="btn btn-outline-cyan btn-block" style="grid-column: 1/-1;">
+              📋 Copy Reference Code
+            </button>
           </div>
         </div>
       </div>
@@ -125,6 +161,7 @@
   <script src="/js/cosmic-canvas.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/qrcode.min.js"></script>
+  <script src="/js/html2canvas.min.js"></script>
   <script src="/js/sse.js"></script>
   <script>
     let currentReg = null;
@@ -223,6 +260,60 @@
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
       });
+    }
+
+    // 1. Direct Print Function with Browser Fallbacks
+    function printTicket() {
+      if (!currentReg) {
+        Toast.error('Please load a valid ticket first.');
+        return;
+      }
+      window.print();
+    }
+
+    // 2. High-Resolution PNG Ticket Download
+    async function downloadTicketImage() {
+      if (!currentReg) {
+        Toast.error('Please load a valid ticket first.');
+        return;
+      }
+
+      const saveBtn = document.getElementById('btn-save-ticket');
+      const origText = saveBtn.innerHTML;
+      saveBtn.setAttribute('disabled', 'true');
+      saveBtn.innerHTML = 'Rendering Image... ⏳';
+
+      const ticketElement = document.getElementById('digital-ticket-card');
+
+      try {
+        if (typeof html2canvas === 'function') {
+          const canvas = await html2canvas(ticketElement, {
+            scale: 2, // High resolution retina output
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#111827'
+          });
+
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `Ticket-${currentReg.referenceCode}.png`;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          Toast.success('Ticket image downloaded successfully! 🎫');
+        } else {
+          // Fallback to print dialog
+          window.print();
+        }
+      } catch (err) {
+        console.error('Download ticket error:', err);
+        Toast.info('Opening print dialog to save as PDF...');
+        window.print();
+      } finally {
+        saveBtn.removeAttribute('disabled');
+        saveBtn.innerHTML = origText;
+      }
     }
 
     function copyReferenceCode() {

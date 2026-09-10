@@ -3,9 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Digital Boarding Pass | CampusPass</title>
+  <title>Event Ticket | CampusPass</title>
   <link rel="stylesheet" href="/css/cosmic.css">
   <link rel="stylesheet" href="/css/components.css">
+  <style>
+    /* Premium Real Event Pass Styles */
+    .real-ticket {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    .real-ticket-top {
+      padding: 24px 24px 18px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .real-ticket-stub {
+      display: flex;
+      align-items: center;
+      position: relative;
+      background: #0f172a;
+    }
+
+    .cutout-left, .cutout-right {
+      width: 28px;
+      height: 28px;
+      background: #0B0F19;
+      border-radius: 50%;
+      position: absolute;
+      top: -14px;
+      z-index: 5;
+    }
+    .cutout-left { left: -14px; border-right: 1px solid rgba(255, 255, 255, 0.15); }
+    .cutout-right { right: -14px; border-left: 1px solid rgba(255, 255, 255, 0.15); }
+
+    .stub-line {
+      width: 100%;
+      border-top: 2px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .real-ticket-body {
+      padding: 24px;
+      background: #0f172a;
+    }
+
+    .ticket-qr-container {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 14px 0 6px;
+    }
+  </style>
 </head>
 <body>
   <div class="aurora-bg"></div>
@@ -27,9 +84,9 @@
 
   <main class="container" style="padding-top: 24px; padding-bottom: 60px;">
     <!-- Lookup Header & Search Box -->
-    <div class="glass-card search-box-card" style="max-width: 600px; margin: 0 auto 30px;">
-      <h2 style="font-size: 1.3rem; margin-bottom: 8px;">Find Your Digital Boarding Pass</h2>
-      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 16px;">Enter your unique reference code to check your live registration, seat number, and QR ticket.</p>
+    <div class="glass-card search-box-card" style="max-width: 580px; margin: 0 auto 30px;">
+      <h2 style="font-size: 1.3rem; margin-bottom: 6px;">Find Your Event Ticket</h2>
+      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 16px;">Enter your reference code to view or download your ticket.</p>
       
       <form id="lookup-form" onsubmit="handleLookup(event)" style="display: flex; gap: 10px;">
         <input type="text" id="lookup-ref-input" required class="form-input" placeholder="e.g. ADR-26-K7X9P2" style="text-transform: uppercase; font-family: monospace; letter-spacing: 0.05em; font-weight: 600;">
@@ -37,75 +94,57 @@
       </form>
     </div>
 
-    <!-- Ticket Result Area -->
-    <div id="ticket-wrapper" class="ticket-container" style="display: none;">
-      <div class="hologram-ticket" id="digital-ticket-card">
-        <!-- Banner Section -->
-        <div class="ticket-header">
-          <img id="ticket-event-banner" src="" alt="Banner" class="ticket-header-img" crossOrigin="anonymous">
-          <div class="ticket-header-overlay">
-            <span id="ticket-status-badge" class="badge badge-published">● CONFIRMED</span>
-            <h2 id="ticket-event-name" style="font-size: 1.25rem; margin-top: 6px; color: #fff;">Event Name</h2>
+    <!-- Real Event Ticket Card -->
+    <div id="ticket-wrapper" class="ticket-container" style="display: none; max-width: 440px; margin: 0 auto;">
+      <div class="real-ticket" id="digital-ticket-card">
+        <!-- Top Section -->
+        <div class="real-ticket-top">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: #a78bfa; text-transform: uppercase;">OFFICIAL EVENT PASS</span>
+            <span id="ticket-status-badge" class="badge badge-published">CONFIRMED</span>
           </div>
+          <h1 id="ticket-event-name" style="font-size: 1.35rem; color: #ffffff; line-height: 1.25; margin-bottom: 6px;">Event Name</h1>
+          <div id="ticket-event-time" style="font-size: 0.85rem; color: #cbd5e1;">🗓️ Date & Time</div>
         </div>
 
-        <!-- Ticket Tear Notches -->
-        <div class="ticket-notch-row">
-          <div class="ticket-notch-left"></div>
-          <div class="ticket-divider"></div>
-          <div class="ticket-notch-right"></div>
+        <!-- Stub Divider -->
+        <div class="real-ticket-stub">
+          <div class="cutout-left"></div>
+          <div class="stub-line"></div>
+          <div class="cutout-right"></div>
         </div>
 
-        <!-- Ticket Core Body -->
-        <div class="ticket-body">
-          <!-- Student Identity -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Attendee Name</div>
-            <div id="ticket-student-name" style="font-size: 1.35rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.01em;">STUDENT NAME</div>
-            <div id="ticket-student-meta" style="font-size: 0.88rem; color: #38BDF8; font-weight: 600; margin-top: 2px;">CSE • B.Tech • 3rd Year</div>
+        <!-- Bottom Body Section -->
+        <div class="real-ticket-body">
+          <!-- Attendee Info -->
+          <div style="margin-bottom: 18px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Attendee</div>
+            <div id="ticket-student-name" style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-top: 2px;">STUDENT NAME</div>
+            <div id="ticket-student-meta" style="font-size: 0.88rem; color: #38bdf8; font-weight: 600; margin-top: 2px;">CSE • B.Tech • 3rd Year</div>
           </div>
 
-          <!-- Grid Meta Details -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; padding: 14px; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+          <!-- Seat & Pool Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; padding: 12px 14px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
             <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Assigned Seat</div>
-              <div id="ticket-seat-display" style="font-size: 1.2rem; font-weight: 800; color: var(--emerald-core);">Seat #--</div>
-            </div>
-            <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Capacity Pool</div>
-              <div id="ticket-bucket-display" style="font-size: 0.92rem; font-weight: 600; color: #fff;">General Pool</div>
+              <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 600;">Seat</div>
+              <div id="ticket-seat-display" style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin-top: 2px;">Seat #--</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Reference Code</div>
-              <div id="ticket-ref-display" style="font-family: monospace; font-size: 0.92rem; font-weight: 700; color: var(--indigo-core);">ADR-XX-XXXX</div>
-            </div>
-            <div>
-              <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Check-In Status</div>
-              <div id="ticket-checkin-display" style="font-size: 0.88rem; font-weight: 700;">Not Checked In</div>
+              <div style="font-size: 0.72rem; text-transform: uppercase; color: #94a3b8; font-weight: 600;">Reference</div>
+              <div id="ticket-ref-display" style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #a78bfa; margin-top: 2px;">ADR-XX-XXXX</div>
             </div>
           </div>
 
-          <!-- Schedule -->
-          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-            <span>🗓️ Date & Time: </span><strong id="ticket-event-time" style="color: #fff;">...</strong>
-          </div>
-
-          <!-- Large Dynamic QR Code Center -->
-          <div style="text-align: center;">
-            <div class="ticket-qr-box" id="ticket-qr-wrapper">
-              <div id="qrcode-canvas-container" style="min-width: 180px; min-height: 180px; display: flex; align-items: center; justify-content: center;"></div>
+          <!-- QR Code Center -->
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div class="ticket-qr-container">
+              <div id="qrcode-canvas-container"></div>
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 6px;">Cryptographic Entry Pass</div>
           </div>
 
-          <!-- Prominent Required Ticket Warning -->
-          <div class="ticket-notice">
-            ⚠️ <strong>Check this ticket again before attending to see the latest seat number and registration status.</strong>
-          </div>
-
-          <!-- Action Buttons (Save Ticket PNG & Copy Ref) -->
-          <div class="btn-action-row" style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
-            <button type="button" onclick="downloadTicketImage()" class="btn btn-primary btn-block btn-lg" id="btn-save-ticket">
+          <!-- Single Action Button -->
+          <div class="btn-action-row" style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" onclick="downloadTicketImageDirect()" class="btn btn-primary btn-block btn-lg" id="btn-save-ticket">
               💾 Save Ticket (PNG)
             </button>
             <button type="button" onclick="copyReferenceCode()" class="btn btn-secondary btn-block">
@@ -120,12 +159,10 @@
   <script src="/js/cosmic-canvas.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/qrcode.min.js"></script>
-  <script src="/js/html2canvas.min.js"></script>
   <script src="/js/sse.js"></script>
   <script>
     let currentReg = null;
     let liveStream = null;
-    let latestQrDataUrl = null;
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialRef = urlParams.get('ref') || localStorage.getItem('last_ticket_ref');
@@ -170,117 +207,243 @@
 
     function renderTicket() {
       const r = currentReg;
-      document.getElementById('ticket-event-banner').src = r.event.bannerUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
       document.getElementById('ticket-event-name').textContent = r.event.name;
       document.getElementById('ticket-student-name').textContent = r.name;
       document.getElementById('ticket-student-meta').textContent = `${r.department} • ${r.program} • ${r.year}`;
-      document.getElementById('ticket-bucket-display').textContent = r.bucketName;
       document.getElementById('ticket-ref-display').textContent = r.referenceCode;
 
       const startDate = new Date(r.event.startAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      document.getElementById('ticket-event-time').textContent = startDate;
+      document.getElementById('ticket-event-time').textContent = `🗓️ ${startDate}`;
 
       const statusBadge = document.getElementById('ticket-status-badge');
       const seatDisplay = document.getElementById('ticket-seat-display');
 
       if (r.status === 'confirmed') {
         statusBadge.className = 'badge badge-confirmed';
-        statusBadge.textContent = '● CONFIRMED';
+        statusBadge.textContent = 'CONFIRMED';
         seatDisplay.textContent = r.seatNumber ? `Seat #${r.seatNumber}` : 'Seat Assigned';
-        seatDisplay.className = 'text-emerald';
+        seatDisplay.style.color = '#34d399';
       } else if (r.status === 'waiting') {
         statusBadge.className = 'badge badge-waiting';
-        statusBadge.textContent = `🟠 WAITING LIST (#${r.waitingPosition})`;
+        statusBadge.textContent = `WAITING #${r.waitingPosition}`;
         seatDisplay.textContent = `Waitlist #${r.waitingPosition}`;
-        seatDisplay.className = 'text-amber';
+        seatDisplay.style.color = '#fbbf24';
       } else {
         statusBadge.className = 'badge badge-cancelled';
-        statusBadge.textContent = '🔴 CANCELLED';
+        statusBadge.textContent = 'CANCELLED';
         seatDisplay.textContent = 'Cancelled';
-        seatDisplay.className = 'text-rose';
+        seatDisplay.style.color = '#f87171';
       }
 
-      const checkinDisplay = document.getElementById('ticket-checkin-display');
-      if (r.isCheckedIn) {
-        checkinDisplay.innerHTML = `<span class="text-emerald">✓ Checked In (${new Date(r.checkedInAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})})</span>`;
-      } else {
-        checkinDisplay.innerHTML = `<span class="text-muted">Not Checked In</span>`;
-      }
-
-      // Generate QR Code cleanly
+      // Generate QR Code directly into canvas
       const qrContainer = document.getElementById('qrcode-canvas-container');
       qrContainer.innerHTML = '';
       
       const qrPayload = localStorage.getItem(`qr_${r.referenceCode}`) || r.referenceCode;
 
-      const qr = new QRCode(qrContainer, {
+      new QRCode(qrContainer, {
         text: qrPayload,
-        width: 180,
-        height: 180,
+        width: 160,
+        height: 160,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
       });
-
-      // Extract image data URL to guarantee capture in PNG download
-      setTimeout(() => {
-        const canvas = qrContainer.querySelector('canvas');
-        if (canvas) {
-          latestQrDataUrl = canvas.toDataURL('image/png');
-          // Replace canvas with clear img tag so html2canvas captures it directly
-          qrContainer.innerHTML = `<img id="rendered-qr-img" src="${latestQrDataUrl}" alt="QR Code" style="width:180px;height:180px;display:block;" />`;
-        }
-      }, 100);
     }
 
-    // High-Resolution PNG Ticket Download with 100% guaranteed QR Code
-    async function downloadTicketImage() {
+    // Direct High-Resolution HTML5 Canvas Ticket Generator (100% Reliable QR + Perfect Ticket Look)
+    function downloadTicketImageDirect() {
       if (!currentReg) {
-        Toast.error('Please load a valid ticket first.');
+        Toast.error('Please load a ticket first.');
         return;
       }
 
-      const saveBtn = document.getElementById('btn-save-ticket');
-      const origText = saveBtn.innerHTML;
-      saveBtn.setAttribute('disabled', 'true');
-      saveBtn.innerHTML = 'Generating High-Res Ticket... ⏳';
-
-      const ticketElement = document.getElementById('digital-ticket-card');
-
-      try {
-        // Ensure QR image is populated
-        const qrImg = document.getElementById('rendered-qr-img');
-        const qrDataUrl = qrImg ? qrImg.src : latestQrDataUrl;
-
-        const canvas = await html2canvas(ticketElement, {
-          scale: 2, // 2x Retina resolution
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#111827',
-          logging: false,
-          onclone: (clonedDoc) => {
-            const clonedQrBox = clonedDoc.querySelector('#qrcode-canvas-container');
-            if (clonedQrBox && qrDataUrl) {
-              clonedQrBox.innerHTML = `<img src="${qrDataUrl}" style="width:180px;height:180px;display:block;margin:0 auto;" />`;
-            }
-          }
-        });
-
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = `Ticket-${currentReg.referenceCode}.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        Toast.success('Ticket image saved with QR code! 🎫');
-      } catch (err) {
-        console.error('Download ticket error:', err);
-        Toast.error('Failed to generate PNG image.');
-      } finally {
-        saveBtn.removeAttribute('disabled');
-        saveBtn.innerHTML = origText;
+      const r = currentReg;
+      const qrCanvas = document.querySelector('#qrcode-canvas-container canvas');
+      if (!qrCanvas) {
+        Toast.error('QR code is still loading, please try again.');
+        return;
       }
+
+      // High-res canvas dimensions (2x Retina)
+      const width = 800;
+      const height = 1100;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      // 1. Draw Ticket Background Card
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      roundRect(ctx, 30, 30, width - 60, height - 60, 24);
+      ctx.fill();
+
+      // Outer border
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 2. Header Gradient Area
+      const headerGrad = ctx.createLinearGradient(30, 30, width - 30, 260);
+      headerGrad.addColorStop(0, '#1e1b4b');
+      headerGrad.addColorStop(1, '#311042');
+
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx, 30, 30, width - 60, 250, [24, 24, 0, 0]);
+      ctx.fillStyle = headerGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // Header Tag
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('OFFICIAL EVENT PASS', 60, 80);
+
+      // Status Pill
+      const statusText = r.status === 'confirmed' ? 'CONFIRMED' : (r.status === 'waiting' ? `WAITING #${r.waitingPosition}` : 'CANCELLED');
+      const statusColor = r.status === 'confirmed' ? '#10b981' : (r.status === 'waiting' ? '#f59e0b' : '#ef4444');
+      ctx.fillStyle = statusColor;
+      ctx.beginPath();
+      roundRect(ctx, width - 210, 58, 150, 32, 16);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(statusText, width - 135, 80);
+      ctx.textAlign = 'left';
+
+      // Event Title (Wrap text if needed)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px "Plus Jakarta Sans", sans-serif';
+      const eventTitle = r.event.name;
+      ctx.fillText(eventTitle.length > 36 ? eventTitle.substring(0, 34) + '...' : eventTitle, 60, 140);
+
+      // Event Date
+      const startDate = new Date(r.event.startAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '20px "Inter", sans-serif';
+      ctx.fillText(`🗓️ ${startDate}`, 60, 185);
+
+      // 3. Dotted Stub Perforation Line & Cutouts
+      const stubY = 280;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 10]);
+      ctx.beginPath();
+      ctx.moveTo(70, stubY);
+      ctx.lineTo(width - 70, stubY);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
+
+      // Semicircle cutouts on edges
+      ctx.fillStyle = '#060810'; // Canvas backdrop outer color
+      ctx.beginPath();
+      ctx.arc(30, stubY, 26, -Math.PI / 2, Math.PI / 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(width - 30, stubY, 26, Math.PI / 2, -Math.PI / 2);
+      ctx.fill();
+
+      // 4. Attendee Details
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 16px "Inter", sans-serif';
+      ctx.fillText('ATTENDEE', 60, 345);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(r.name, 60, 395);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 22px "Inter", sans-serif';
+      ctx.fillText(`${r.department} • ${r.program} • ${r.year}`, 60, 435);
+
+      // 5. Seat & Ref Info Cards
+      const infoBoxY = 480;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.beginPath();
+      roundRect(ctx, 60, infoBoxY, width - 120, 130, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Seat Column
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 16px "Inter", sans-serif';
+      ctx.fillText('ASSIGNED SEAT', 90, infoBoxY + 45);
+
+      const seatText = r.seatNumber ? `Seat #${r.seatNumber}` : (r.status === 'waiting' ? `Waitlist #${r.waitingPosition}` : 'N/A');
+      ctx.fillStyle = r.status === 'confirmed' ? '#34d399' : '#fbbf24';
+      ctx.font = 'bold 32px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(seatText, 90, infoBoxY + 95);
+
+      // Reference Column
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 16px "Inter", sans-serif';
+      ctx.fillText('REFERENCE CODE', width / 2 + 30, infoBoxY + 45);
+
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(r.referenceCode, width / 2 + 30, infoBoxY + 95);
+
+      // 6. Centered White QR Container with Real QR Code
+      const qrBoxSize = 270;
+      const qrBoxX = (width - qrBoxSize) / 2;
+      const qrBoxY = 660;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      roundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 20);
+      ctx.fill();
+
+      // Draw the QR canvas directly onto this canvas!
+      const qrImageMargin = 20;
+      ctx.drawImage(
+        qrCanvas,
+        qrBoxX + qrImageMargin,
+        qrBoxY + qrImageMargin,
+        qrBoxSize - (qrImageMargin * 2),
+        qrBoxSize - (qrImageMargin * 2)
+      );
+
+      // Footer brand label
+      ctx.fillStyle = '#64748b';
+      ctx.font = '16px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Scan at entrance for venue check-in • CampusPass Portal', width / 2, 990);
+
+      // Convert canvas to PNG and trigger instant download
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `Ticket-${r.referenceCode}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Toast.success('Ticket image saved! 🎫');
+    }
+
+    // Canvas roundRect helper
+    function roundRect(ctx, x, y, width, height, radius) {
+      if (typeof radius === 'number') {
+        radius = { tl: radius, tr: radius, br: radius, bl: radius };
+      } else if (Array.isArray(radius)) {
+        radius = { tl: radius[0], tr: radius[1], br: radius[2], bl: radius[3] };
+      }
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
     }
 
     function copyReferenceCode() {

@@ -446,3 +446,72 @@
   animation: spin 1s linear infinite;
 }
 
+/* Skeleton Loading Shimmer System */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    rgba(255, 255, 255, 0.03) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-banner {
+  width: 100%;
+  height: 190px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.skeleton-detail-banner {
+  width: 100%;
+  height: 230px;
+  border-radius: 0;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 75%;
+  margin: 12px 0 8px;
+  border-radius: 6px;
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 90%;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+.skeleton-badge {
+  height: 22px;
+  width: 80px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.skeleton-bar {
+  height: 8px;
+  width: 100%;
+  margin: 12px 0;
+  border-radius: 4px;
+}
+
+.skeleton-btn {
+  height: 38px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  margin-top: 14px;
+}
+

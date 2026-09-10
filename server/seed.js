@@ -23,7 +23,7 @@ function seedDemoData() {
   `).run(
     'Cosmic Hackathon 2026: Galactic Code Sprint',
     'Join the most prestigious interstellar 36-hour hackathon! Build planetary-scale AI systems, quantum simulation tools, and decentralized space networks with cosmic mentors.',
-    'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+    null,
     nextWeek.toISOString(),
     new Date(nextWeek.getTime() + 36 * 3600 * 1000).toISOString()
   );
@@ -94,7 +94,7 @@ function seedDemoData() {
   `).run(
     'Quantum AI & Nebula Space Summit 2026',
     'A landmark symposium covering deep space telemetry, quantum cryptography, and autonomous starship navigation protocols with global aerospace researchers.',
-    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+    null,
     nextMonth.toISOString(),
     new Date(nextMonth.getTime() + 8 * 3600 * 1000).toISOString()
   );
@@ -136,7 +136,7 @@ function seedDemoData() {
   `).run(
     'Intercollegiate Cosmic Gaming Arena',
     'High-octane esports tournament across campus. Open to all engineering departments and years with one unified general capacity pool.',
-    'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+    null,
     new Date(now.getTime() + 14 * 24 * 3600 * 1000).toISOString(),
     new Date(now.getTime() + 15 * 24 * 3600 * 1000).toISOString()
   );

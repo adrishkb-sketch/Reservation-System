@@ -27,13 +27,14 @@
   <main class="container container-narrow" style="padding-top: 24px; padding-bottom: 60px;">
     <!-- Event Banner & Header -->
     <div class="glass-card" style="padding: 0; overflow: hidden; margin-bottom: 24px;">
-      <img id="event-banner-img" src="" alt="Event Banner" style="width: 100%; height: 230px; object-fit: cover; background: #1F2937;">
+      <div id="banner-skeleton" class="skeleton skeleton-detail-banner" style="display: block;"></div>
+      <img id="event-banner-img" src="" alt="Event Banner" style="width: 100%; height: 230px; object-fit: cover; background: #1F2937; display: none;" decoding="async" onload="document.getElementById('banner-skeleton').style.display='none'; this.style.display='block';">
       <div style="padding: 24px;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
           <span id="event-status-badge" class="badge badge-published">Published</span>
           <span id="event-grouping-badge" class="badge badge-purple">Multi-Group Capacity</span>
         </div>
-        <h1 id="event-title" style="font-size: 1.8rem; margin-bottom: 8px;">Loading Event...</h1>
+        <h1 id="event-title" style="font-size: 1.8rem; margin-bottom: 8px;">Loading Event Details...</h1>
         <p id="event-desc" class="text-muted" style="font-size: 0.95rem; margin-bottom: 16px;"></p>
         
         <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.88rem; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 14px;">
@@ -51,6 +52,8 @@
       </div>
       <div id="capacity-pools-container">
         <!-- Injected capacity bucket breakdown -->
+        <div class="skeleton skeleton-bar" style="height: 48px; border-radius: 8px; margin-bottom: 10px;"></div>
+        <div class="skeleton skeleton-bar" style="height: 48px; border-radius: 8px;"></div>
       </div>
     </div>
 
@@ -158,6 +161,7 @@
 
   <script src="/js/cosmic-canvas.js"></script>
   <script src="/js/icons.js"></script>
+  <script src="/js/banner-utils.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/sse.js"></script>
   <script>
@@ -174,13 +178,27 @@
     let selectedYear = null;
     let liveStream = null;
 
+    // Check session cache for instantaneous 0ms display
+    const cachedEvent = sessionStorage.getItem(`cached_event_${eventId}`);
+    if (cachedEvent) {
+      try {
+        eventData = JSON.parse(cachedEvent);
+        renderEventDetails();
+        renderCapacityPools();
+        renderStep1Depts();
+      } catch (e) {}
+    }
+
     async function loadEventDetails() {
       try {
         const res = await API.get(`/events/${eventId}`);
         eventData = res;
+        sessionStorage.setItem(`cached_event_${eventId}`, JSON.stringify(res));
         renderEventDetails();
         renderCapacityPools();
-        renderStep1Depts();
+        if (!selectedDept) {
+          renderStep1Depts();
+        }
 
         if (!liveStream) {
           liveStream = new CosmicLiveStream(eventId, (type, payload) => {
@@ -188,7 +206,9 @@
           });
         }
       } catch (err) {
-        Toast.error(err.message || 'Failed to load event details.');
+        if (!eventData) {
+          Toast.error(err.message || 'Failed to load event details.');
+        }
       }
     }
 
@@ -196,7 +216,14 @@
       const { event, groupingExplanation } = eventData;
       document.getElementById('event-title').textContent = event.name;
       document.getElementById('event-desc').textContent = event.description;
-      document.getElementById('event-banner-img').src = event.banner_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
+      
+      const bannerImg = document.getElementById('event-banner-img');
+      const resolvedBanner = resolveBannerUrl(event.banner_url, event.name, event.id);
+      bannerImg.onerror = function() {
+        this.onerror = null;
+        this.src = getFastBanner(event.name, event.id);
+      };
+      bannerImg.src = resolvedBanner;
       
       const startDate = new Date(event.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       document.getElementById('event-date').innerHTML = `<span data-icon="calendar" data-size="14"></span> <span>${startDate}</span>`;

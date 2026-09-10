@@ -2,6 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 const config = require('./config');
 const db = require('./db');
 
@@ -14,14 +15,22 @@ const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 
+app.use(compression());
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Static assets
-app.use('/uploads', express.static(config.UPLOAD_DIR));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Static assets with caching
+app.use('/uploads', express.static(config.UPLOAD_DIR, { maxAge: '1d' }));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  maxAge: '1h',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 // API Routes
 app.use('/api/auth', authRoutes);

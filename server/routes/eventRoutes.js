@@ -58,6 +58,7 @@ router.get('/:id/live-stream', (req, res) => {
 
 // Public: List all published events
 router.get('/public', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=2, s-maxage=10, stale-while-revalidate=59');
   const events = db.prepare(`
     SELECT e.*,
       (SELECT COUNT(*) FROM registrations r WHERE r.event_id = e.id AND r.status = 'confirmed') as confirmed_count,
@@ -93,6 +94,8 @@ router.get('/:id', (req, res) => {
   if (!event) {
     return res.status(404).json({ error: 'Event not found' });
   }
+
+  res.setHeader('Cache-Control', 'public, max-age=2, s-maxage=10, stale-while-revalidate=59');
 
   const eligibility = db.prepare(`
     SELECT department, program, year 

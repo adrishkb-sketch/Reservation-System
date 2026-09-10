@@ -15,7 +15,7 @@
   <header class="cosmic-nav">
     <div class="container nav-content">
       <a href="/admin/index.html" class="brand-logo">
-        <div class="brand-icon">🛡️</div>
+        <div class="brand-icon" data-icon="shield" data-size="22"></div>
         <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">EVENTS</span></span>
       </a>
       <div style="display: flex; gap: 10px; align-items: center;">
@@ -32,7 +32,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2 id="editor-heading" style="font-size: 1.4rem;">Create College Event</h2>
         <div style="display: flex; gap: 8px;">
-          <button type="button" onclick="deleteCurrentEditingEvent()" class="btn btn-danger btn-sm" id="btn-delete-current" style="display: none;">🗑️ Delete This Event</button>
+          <button type="button" onclick="deleteCurrentEditingEvent()" class="btn btn-danger btn-sm" id="btn-delete-current" style="display: none;"><span data-icon="trash" data-size="14"></span> Delete This Event</button>
           <button type="button" onclick="cancelEdit()" class="btn btn-secondary btn-sm" id="btn-cancel-edit" style="display: none;">Cancel Edit</button>
         </div>
       </div>
@@ -113,7 +113,7 @@
         <!-- SECTION 4: Flexible Capacity Grouping System (3 Independent Switches) -->
         <div class="glass-card" style="margin: 20px 0; background: rgba(99, 102, 241, 0.04); border-color: rgba(99, 102, 241, 0.25);">
           <div style="margin-bottom: 14px;">
-            <div class="badge badge-purple" style="margin-bottom: 6px;">⚡ Capacity Engine</div>
+            <div class="badge badge-purple" style="margin-bottom: 6px; display: inline-flex; align-items: center; gap: 4px;"><span data-icon="zap" data-size="12"></span> Capacity Engine</div>
             <h3 style="font-size: 1.2rem; color: #fff;">4. Flexible Capacity Grouping (3 Independent Switches)</h3>
             <p class="text-muted" style="font-size: 0.85rem;">Determine how registration capacity is pooled. Automatically generates required capacity buckets from selected eligibility.</p>
           </div>
@@ -176,7 +176,7 @@
         <!-- Submit Button -->
         <div style="text-align: right; margin-top: 24px;">
           <button type="submit" class="btn btn-primary btn-lg" id="btn-save-event">
-            Save & Publish Event ➔
+            Save & Publish Event <span data-icon="arrowRight" data-size="16" class="icon-right"></span>
           </button>
         </div>
       </form>
@@ -192,6 +192,7 @@
   </main>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/admin-guard.js"></script>
   <script>
@@ -294,7 +295,8 @@
       e.preventDefault();
       const btn = document.getElementById('btn-save-event');
       btn.setAttribute('disabled', 'true');
-      btn.textContent = 'Saving Event... ⏳';
+      btn.innerHTML = `<span><span data-icon="spinner" data-size="16" class="spin" style="margin-right: 6px;"></span> Saving Event...</span>`;
+      Icons.replace(btn);
 
       try {
         const editId = document.getElementById('edit-event-id').value;
@@ -353,7 +355,8 @@
         Toast.error(err.message || 'Failed to save event.');
       } finally {
         btn.removeAttribute('disabled');
-        btn.textContent = 'Save & Publish Event ➔';
+        btn.innerHTML = `Save & Publish Event <span data-icon="arrowRight" data-size="16" class="icon-right"></span>`;
+        Icons.replace(btn);
       }
     }
 
@@ -376,7 +379,9 @@
                 <div>
                   <div style="display: flex; gap: 8px; align-items: center;">
                     <span class="badge ${badgeClass}">● ${ev.status.toUpperCase()}</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(ev.start_at).toLocaleDateString()}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                      <span data-icon="calendar" data-size="12"></span> ${new Date(ev.start_at).toLocaleDateString()}
+                    </span>
                   </div>
                   <h3 style="font-size: 1.15rem; margin-top: 6px;">${ev.name}</h3>
                   <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
@@ -384,15 +389,17 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button onclick="editEvent(${ev.id})" class="btn btn-outline-cyan btn-sm">✏️ Edit</button>
-                  <a href="/admin/seats.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">💺 Seats</a>
-                  <a href="/admin/registrations.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">👥 Students</a>
-                  <button onclick="deleteEvent(${ev.id}, '${ev.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                  <button onclick="editEvent(${ev.id})" class="btn btn-outline-cyan btn-sm"><span data-icon="edit" data-size="14"></span> Edit</button>
+                  <a href="/admin/seats.html?eventId=${ev.id}" class="btn btn-secondary btn-sm"><span data-icon="seat" data-size="14"></span> Seats</a>
+                  <a href="/admin/registrations.html?eventId=${ev.id}" class="btn btn-secondary btn-sm"><span data-icon="users" data-size="14"></span> Students</a>
+                  <button onclick="deleteEvent(${ev.id}, '${ev.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm"><span data-icon="trash" data-size="14"></span> Delete</button>
                 </div>
               </div>
             </div>
           `;
         }).join('');
+
+        Icons.replace(container);
       } catch (err) {
         container.innerHTML = `<div class="text-rose">Error loading events: ${err.message}</div>`;
       }

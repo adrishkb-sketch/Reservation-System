@@ -412,3 +412,37 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* SVG Icon Helper Styles */
+.svg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.brand-icon .svg-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.btn .svg-icon {
+  margin-right: 6px;
+}
+
+.btn .svg-icon.icon-right {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+

@@ -13,7 +13,7 @@
   <!-- Unauthenticated Login View (Default) -->
   <div id="admin-login-view" style="display: none; padding: 40px 20px;">
     <div style="text-align: center; margin-bottom: 24px;">
-      <div class="brand-icon" style="margin: 0 auto 12px; width: 52px; height: 52px; font-size: 26px;">🛡️</div>
+      <div class="brand-icon" data-icon="shield" data-size="26" style="margin: 0 auto 12px; width: 52px; height: 52px;"></div>
       <h1 style="font-size: 1.6rem; color: #fff;">CampusPass Admin Access</h1>
       <p class="text-muted" style="font-size: 0.88rem; margin-top: 4px;">Sign in to access event controls, seat allocation, and scanner.</p>
     </div>
@@ -31,7 +31,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit-btn" style="margin-top: 10px;">
-          Authenticate Access ➔
+          Authenticate Access <span data-icon="arrowRight" data-size="16" class="icon-right"></span>
         </button>
       </form>
     </div>
@@ -43,7 +43,7 @@
     <header class="cosmic-nav">
       <div class="container nav-content">
         <a href="/admin/index.html" class="brand-logo">
-          <div class="brand-icon">🛡️</div>
+          <div class="brand-icon" data-icon="shield" data-size="22"></div>
           <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">ADMIN</span></span>
         </a>
         <div id="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
@@ -63,8 +63,8 @@
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <a href="/admin/events.html?action=create" class="btn btn-primary" id="btn-create-event">+ Create Event</a>
-          <button onclick="purgeAllEvents()" class="btn btn-danger btn-sm" id="btn-purge-all">🗑️ Delete All Events</button>
-          <a href="/admin/scanner.html" class="btn btn-outline-cyan">📷 QR Scanner</a>
+          <button onclick="purgeAllEvents()" class="btn btn-danger btn-sm" id="btn-purge-all"><span data-icon="trash" data-size="14"></span> Delete All Events</button>
+          <a href="/admin/scanner.html" class="btn btn-outline-cyan"><span data-icon="camera" data-size="14"></span> QR Scanner</a>
         </div>
       </div>
 
@@ -99,31 +99,31 @@
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Management Modules</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 36px;">
         <a href="/admin/events.html" class="glass-card glass-card-interactive" style="text-decoration: none; color: inherit;">
-          <div style="font-size: 28px; margin-bottom: 10px;">📅</div>
+          <div data-icon="calendar" data-size="28" style="color: var(--indigo-core); margin-bottom: 12px;"></div>
           <h3 style="font-size: 1.15rem; color: #fff;">Manage Events</h3>
           <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">Create events, edit statuses, customize 3-switch capacity grouping, eligibility matrix, or delete events.</p>
         </a>
 
         <a href="/admin/registrations.html" class="glass-card glass-card-interactive" style="text-decoration: none; color: inherit;">
-          <div style="font-size: 28px; margin-bottom: 10px;">👥</div>
+          <div data-icon="users" data-size="28" style="color: var(--cyan-core); margin-bottom: 12px;"></div>
           <h3 style="font-size: 1.15rem; color: #fff;">Registrations Hub</h3>
           <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">Search students, reassign seats with collision warnings, promote waiting list, and manage tickets.</p>
         </a>
 
         <a href="/admin/seats.html" class="glass-card glass-card-interactive" style="text-decoration: none; color: inherit;">
-          <div style="font-size: 28px; margin-bottom: 10px;">💺</div>
+          <div data-icon="seat" data-size="28" style="color: var(--purple-core); margin-bottom: 12px;"></div>
           <h3 style="font-size: 1.15rem; color: #fff;">Seat Allocation Studio</h3>
           <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">Assign physical seat ranges (e.g. 1-20, 25, 30-35) per capacity bucket with live visual grid map.</p>
         </a>
 
         <a href="/admin/scanner.html" class="glass-card glass-card-interactive" style="text-decoration: none; color: inherit;">
-          <div style="font-size: 28px; margin-bottom: 10px;">📷</div>
+          <div data-icon="camera" data-size="28" style="color: var(--emerald-core); margin-bottom: 12px;"></div>
           <h3 style="font-size: 1.15rem; color: #fff;">Universal QR Scanner</h3>
           <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">Live mobile camera ticket scanning, instant cryptographic verification, and sound feedback.</p>
         </a>
 
         <a href="/admin/stats.html" class="glass-card glass-card-interactive" style="text-decoration: none; color: inherit;">
-          <div style="font-size: 28px; margin-bottom: 10px;">📊</div>
+          <div data-icon="barChart" data-size="28" style="color: var(--amber-core); margin-bottom: 12px;"></div>
           <h3 style="font-size: 1.15rem; color: #fff;">Attendance & Analytics</h3>
           <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">Department/Program breakdowns, check-in audit history, and one-click CSV report export.</p>
         </a>
@@ -143,19 +143,19 @@
     <nav class="mobile-nav-bar">
       <div class="mobile-nav-grid">
         <a href="/admin/index.html" class="mobile-nav-item active">
-          <span class="mobile-nav-icon">📊</span>
+          <span class="mobile-nav-icon" data-icon="barChart" data-size="20"></span>
           <span>Overview</span>
         </a>
         <a href="/admin/events.html" class="mobile-nav-item">
-          <span class="mobile-nav-icon">📅</span>
+          <span class="mobile-nav-icon" data-icon="calendar" data-size="20"></span>
           <span>Events</span>
         </a>
         <a href="/admin/registrations.html" class="mobile-nav-item">
-          <span class="mobile-nav-icon">👥</span>
+          <span class="mobile-nav-icon" data-icon="users" data-size="20"></span>
           <span>Students</span>
         </a>
         <a href="/admin/scanner.html" class="mobile-nav-item">
-          <span class="mobile-nav-icon">📷</span>
+          <span class="mobile-nav-icon" data-icon="camera" data-size="20"></span>
           <span>Scanner</span>
         </a>
       </div>
@@ -163,6 +163,7 @@
   </div>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script>
     async function checkAuth() {
@@ -174,6 +175,7 @@
           document.getElementById('admin-dashboard-view').style.display = 'block';
           loadDashboardStats();
           loadAdminEvents();
+          Icons.replace();
         } else {
           showLoginView();
         }
@@ -185,6 +187,7 @@
     function showLoginView() {
       document.getElementById('admin-login-view').style.display = 'block';
       document.getElementById('admin-dashboard-view').style.display = 'none';
+      Icons.replace();
     }
 
     async function handleLogin(e) {
@@ -194,7 +197,8 @@
       const btn = document.getElementById('login-submit-btn');
 
       btn.setAttribute('disabled', 'true');
-      btn.textContent = 'Authenticating... ⏳';
+      btn.innerHTML = `<span><span data-icon="spinner" data-size="16" class="spin" style="margin-right: 6px;"></span> Authenticating...</span>`;
+      Icons.replace(btn);
 
       try {
         const res = await API.post('/auth/login', { loginId, password });
@@ -204,7 +208,8 @@
         Toast.error(err.message || 'Login failed.');
       } finally {
         btn.removeAttribute('disabled');
-        btn.textContent = 'Authenticate Access ➔';
+        btn.innerHTML = `Authenticate Access <span data-icon="arrowRight" data-size="16" class="icon-right"></span>`;
+        Icons.replace(btn);
       }
     }
 
@@ -258,7 +263,9 @@
                 <div>
                   <div style="display: flex; gap: 8px; align-items: center;">
                     <span class="badge ${badgeClass}">● ${ev.status.toUpperCase()}</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">🗓️ ${startDate}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                      <span data-icon="calendar" data-size="12"></span> ${startDate}
+                    </span>
                   </div>
                   <h3 style="margin-top: 6px; font-size: 1.15rem;">${ev.name}</h3>
                   <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
@@ -268,15 +275,17 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <a href="/admin/registrations.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">👥 Students</a>
-                  <a href="/admin/seats.html?eventId=${ev.id}" class="btn btn-secondary btn-sm">💺 Seats</a>
-                  <a href="/admin/events.html?id=${ev.id}" class="btn btn-outline-cyan btn-sm">✏️ Edit</a>
-                  <button onclick="deleteSingleEvent(${ev.id}, '${ev.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                  <a href="/admin/registrations.html?eventId=${ev.id}" class="btn btn-secondary btn-sm"><span data-icon="users" data-size="14"></span> Students</a>
+                  <a href="/admin/seats.html?eventId=${ev.id}" class="btn btn-secondary btn-sm"><span data-icon="seat" data-size="14"></span> Seats</a>
+                  <a href="/admin/events.html?id=${ev.id}" class="btn btn-outline-cyan btn-sm"><span data-icon="edit" data-size="14"></span> Edit</a>
+                  <button onclick="deleteSingleEvent(${ev.id}, '${ev.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm"><span data-icon="trash" data-size="14"></span> Delete</button>
                 </div>
               </div>
             </div>
           `;
         }).join('');
+
+        Icons.replace(container);
       } catch (err) {
         container.innerHTML = `<div class="text-rose">Failed to load events: ${err.message}</div>`;
       }

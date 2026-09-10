@@ -78,12 +78,19 @@ const Toast = {
     const toast = document.createElement('div');
     toast.className = `cosmic-toast toast-${type}`;
 
-    let icon = '✨';
-    if (type === 'success') icon = '✅';
-    if (type === 'error') icon = '⚠️';
-    if (type === 'warning') icon = '⚡';
+    let iconSvg = '';
+    if (window.Icons) {
+      if (type === 'success') iconSvg = Icons.get('checkCircle', 18);
+      else if (type === 'error') iconSvg = Icons.get('alertCircle', 18);
+      else if (type === 'warning') iconSvg = Icons.get('alertTriangle', 18);
+      else iconSvg = Icons.get('sparkles', 18);
+    } else {
+      if (type === 'success') iconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      else if (type === 'error') iconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+      else iconSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>';
+    }
 
-    toast.innerHTML = `<span>${icon}</span><span style="flex-grow: 1;">${message}</span>`;
+    toast.innerHTML = `<span style="display: flex; align-items: center;">${iconSvg}</span><span style="flex-grow: 1;">${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {

@@ -15,7 +15,7 @@
     <header class="cosmic-nav">
       <div class="container nav-content">
         <a href="/admin/index.html" class="brand-logo">
-          <div class="brand-icon">🛡️</div>
+          <div class="brand-icon" data-icon="shield" data-size="22"></div>
           <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">SEAT STUDIO</span></span>
         </a>
         <div style="display: flex; gap: 10px; align-items: center;">
@@ -37,7 +37,7 @@
           </select>
         </div>
         <div style="display: flex; gap: 10px; align-items: flex-end;">
-          <button onclick="loadSeatConfiguration()" class="btn btn-secondary btn-sm">🔄 Refresh Map</button>
+          <button onclick="loadSeatConfiguration()" class="btn btn-secondary btn-sm"><span data-icon="refresh" data-size="14"></span> Refresh Map</button>
         </div>
       </div>
     </div>
@@ -61,7 +61,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-save-seats" style="margin-top: 20px;">
-            Apply & Lock Seat Map 💺
+            <span data-icon="seat" data-size="16"></span> Apply & Lock Seat Map
           </button>
         </form>
       </div>
@@ -105,6 +105,7 @@
 </div>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/admin-guard.js"></script>
   <script>
@@ -247,7 +248,8 @@
       e.preventDefault();
       const btn = document.getElementById('btn-save-seats');
       btn.setAttribute('disabled', 'true');
-      btn.textContent = 'Allocating Seats... ⏳';
+      btn.innerHTML = `<span><span data-icon="spinner" data-size="16" class="spin" style="margin-right: 6px;"></span> Allocating Seats...</span>`;
+      Icons.replace(btn);
 
       try {
         const totalPhysicalSeats = parseInt(document.getElementById('total-physical-seats-input').value, 10);
@@ -271,13 +273,15 @@
         Toast.error(err.message || 'Seat allocation failed.');
       } finally {
         btn.removeAttribute('disabled');
-        btn.textContent = 'Apply & Lock Seat Map 💺';
+        btn.innerHTML = `<span data-icon="seat" data-size="16"></span> Apply & Lock Seat Map`;
+        Icons.replace(btn);
       }
     }
 
     async function initPage() {
       const admin = await protectAdminPage();
       if (!admin) return;
+      Icons.replace();
       loadEventsDropdown();
     }
 

@@ -15,12 +15,12 @@
     <header class="cosmic-nav">
       <div class="container nav-content">
         <a href="/admin/index.html" class="brand-logo">
-          <div class="brand-icon">📷</div>
+          <div class="brand-icon" data-icon="camera" data-size="22"></div>
           <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">SCANNER</span></span>
         </a>
         <div style="display: flex; gap: 10px; align-items: center;">
           <a href="/admin/index.html" class="nav-link">← Dashboard</a>
-          <a href="/admin/stats.html" class="btn btn-secondary btn-sm">📊 Stats</a>
+          <a href="/admin/stats.html" class="btn btn-secondary btn-sm"><span data-icon="barChart" data-size="14"></span> Stats</a>
           <button onclick="handleAdminLogout()" class="btn btn-danger btn-sm">Logout</button>
         </div>
       </div>
@@ -43,8 +43,8 @@
       </div>
 
       <div style="display: flex; justify-content: center; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
-        <button onclick="startScanner()" class="btn btn-primary btn-sm" id="btn-start-scanner">▶ Start Camera</button>
-        <button onclick="stopScanner()" class="btn btn-secondary btn-sm" id="btn-stop-scanner" style="display: none;">⏹ Stop Camera</button>
+        <button onclick="startScanner()" class="btn btn-primary btn-sm" id="btn-start-scanner"><span data-icon="play" data-size="12"></span> Start Camera</button>
+        <button onclick="stopScanner()" class="btn btn-secondary btn-sm" id="btn-stop-scanner" style="display: none;"><span data-icon="square" data-size="12"></span> Stop Camera</button>
       </div>
 
       <!-- Manual QR Token / Ref Fallback Input -->
@@ -63,7 +63,7 @@
         <!-- Injected status details -->
       </div>
       <div style="text-align: center; margin-top: 10px;">
-        <button onclick="dismissScanResult()" class="btn btn-secondary btn-sm">Scan Next Ticket ➔</button>
+        <button onclick="dismissScanResult()" class="btn btn-secondary btn-sm">Scan Next Ticket <span data-icon="arrowRight" data-size="14" class="icon-right"></span></button>
       </div>
     </div>
 
@@ -83,19 +83,19 @@
   <nav class="mobile-nav-bar">
     <div class="mobile-nav-grid">
       <a href="/admin/index.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">📊</span>
+        <span class="mobile-nav-icon" data-icon="barChart" data-size="20"></span>
         <span>Overview</span>
       </a>
       <a href="/admin/events.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">📅</span>
+        <span class="mobile-nav-icon" data-icon="calendar" data-size="20"></span>
         <span>Events</span>
       </a>
       <a href="/admin/registrations.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">👥</span>
+        <span class="mobile-nav-icon" data-icon="users" data-size="20"></span>
         <span>Students</span>
       </a>
       <a href="/admin/scanner.html" class="mobile-nav-item active">
-        <span class="mobile-nav-icon">📷</span>
+        <span class="mobile-nav-icon" data-icon="camera" data-size="20"></span>
         <span>Scanner</span>
       </a>
     </div>
@@ -103,6 +103,7 @@
 </div>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/admin-guard.js"></script>
   <script src="/js/html5-qrcode.min.js"></script>
@@ -235,17 +236,18 @@
         const st = res.student;
 
         resultInner.innerHTML = `
-          <div class="scan-icon-bubble scan-success-bubble">✓</div>
+          <div class="scan-icon-bubble scan-success-bubble"><span data-icon="check" data-size="32"></span></div>
           <h2 style="color: var(--emerald-core); font-size: 1.5rem; margin-bottom: 4px;">CHECK-IN SUCCESSFUL</h2>
           <div style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-top: 8px;">${st.name}</div>
           <div style="font-size: 0.9rem; color: #38BDF8; font-weight: 600;">${st.department} • ${st.program} • ${st.year}</div>
-          <div style="font-size: 1.35rem; font-weight: 800; color: var(--emerald-core); margin-top: 10px;">
-            💺 Assigned Seat #${st.seatNumber || 'N/A'}
+          <div style="font-size: 1.35rem; font-weight: 800; color: var(--emerald-core); margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span data-icon="seat" data-size="20"></span> Assigned Seat #${st.seatNumber || 'N/A'}
           </div>
           <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
             Ref: <strong style="color: #fff;">${st.referenceCode}</strong> | Time: ${new Date(st.checkedInAt).toLocaleTimeString()}
           </div>
         `;
+        Icons.replace(resultInner);
         resultBox.style.display = 'block';
 
         addCheckInHistory({
@@ -262,25 +264,26 @@
         if (msg.includes('ALREADY CHECKED IN')) {
           playBeep('warning');
           resultInner.innerHTML = `
-            <div class="scan-icon-bubble scan-warning-bubble">⚠️</div>
+            <div class="scan-icon-bubble scan-warning-bubble"><span data-icon="alertTriangle" data-size="32"></span></div>
             <h2 style="color: var(--amber-core); font-size: 1.4rem;">ALREADY CHECKED IN</h2>
             <p style="color: #fff; font-size: 0.95rem; margin-top: 8px;">${msg}</p>
           `;
         } else if (msg.includes('WAITING LIST')) {
           playBeep('danger');
           resultInner.innerHTML = `
-            <div class="scan-icon-bubble scan-danger-bubble">✕</div>
+            <div class="scan-icon-bubble scan-danger-bubble"><span data-icon="x" data-size="32"></span></div>
             <h2 style="color: var(--rose-core); font-size: 1.4rem;">INVALID / NOT ELIGIBLE FOR ENTRY</h2>
             <p style="color: #FCD34D; font-size: 0.95rem; margin-top: 8px;">Attendee is currently on the <strong>WAITING LIST</strong>. Entry not permitted.</p>
           `;
         } else {
           playBeep('danger');
           resultInner.innerHTML = `
-            <div class="scan-icon-bubble scan-danger-bubble">✕</div>
+            <div class="scan-icon-bubble scan-danger-bubble"><span data-icon="x" data-size="32"></span></div>
             <h2 style="color: var(--rose-core); font-size: 1.4rem;">INVALID / NOT ELIGIBLE FOR ENTRY</h2>
             <p style="color: var(--rose-core); font-size: 0.9rem; margin-top: 8px;">${msg}</p>
           `;
         }
+        Icons.replace(resultInner);
         resultBox.style.display = 'block';
       }
     }
@@ -299,16 +302,21 @@
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
           <div>
             <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">${ch.name}</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Ref: ${ch.ref} | 💺 Seat #${ch.seat || 'N/A'}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+              <span>Ref: ${ch.ref}</span> | <span data-icon="seat" data-size="12"></span> <span>Seat #${ch.seat || 'N/A'}</span>
+            </div>
           </div>
           <span class="badge badge-published" style="font-size: 0.75rem;">${ch.time}</span>
         </div>
       `).join('');
+
+      Icons.replace(container);
     }
 
     async function initPage() {
       const admin = await protectAdminPage();
       if (!admin) return;
+      Icons.replace();
       loadEventsDropdown();
     }
 

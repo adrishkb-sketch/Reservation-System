@@ -15,12 +15,12 @@
     <header class="cosmic-nav">
       <div class="container nav-content">
         <a href="/admin/index.html" class="brand-logo">
-          <div class="brand-icon">📊</div>
+          <div class="brand-icon" data-icon="barChart" data-size="22"></div>
           <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">ANALYTICS</span></span>
         </a>
         <div style="display: flex; gap: 10px; align-items: center;">
           <a href="/admin/index.html" class="nav-link">← Dashboard</a>
-          <a href="/admin/registrations.html" class="btn btn-secondary btn-sm">Students</a>
+          <a href="/admin/registrations.html" class="btn btn-secondary btn-sm"><span data-icon="users" data-size="14"></span> Students</a>
           <button onclick="handleAdminLogout()" class="btn btn-danger btn-sm">Logout</button>
         </div>
       </div>
@@ -37,8 +37,8 @@
           </select>
         </div>
         <div style="display: flex; gap: 10px; align-items: flex-end;">
-          <button onclick="exportCsv()" class="btn btn-primary btn-sm">📥 Export CSV Report</button>
-          <button onclick="loadEventStats()" class="btn btn-secondary btn-sm">🔄 Refresh</button>
+          <button onclick="exportCsv()" class="btn btn-primary btn-sm"><span data-icon="download" data-size="14"></span> Export CSV Report</button>
+          <button onclick="loadEventStats()" class="btn btn-secondary btn-sm"><span data-icon="refresh" data-size="14"></span> Refresh</button>
         </div>
       </div>
     </div>
@@ -120,6 +120,7 @@
 </div>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/admin-guard.js"></script>
   <script>
@@ -248,11 +249,13 @@
           <tr>
             <td style="font-size: 0.8rem; color: var(--text-dim);">${new Date(l.created_at).toLocaleString()}</td>
             <td><span class="badge badge-purple">${l.action}</span></td>
-            <td>${l.admin_login || 'System'} ${l.student_name ? `➔ ${l.student_name} (${l.reference_code})` : ''}</td>
+            <td>${l.admin_login || 'System'} ${l.student_name ? `<span data-icon="arrowRight" data-size="12" style="margin: 0 4px;"></span> ${l.student_name} (${l.reference_code})` : ''}</td>
             <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-dim);">${l.previous_val || '-'}</td>
             <td style="font-family: monospace; font-size: 0.8rem; color: #38BDF8;">${l.new_val || '-'}</td>
           </tr>
         `).join('');
+
+        Icons.replace(tbody);
       } catch (err) {
         console.error(err);
       }
@@ -266,6 +269,7 @@
     async function initPage() {
       const admin = await protectAdminPage();
       if (!admin) return;
+      Icons.replace();
       loadEventsDropdown();
     }
 

@@ -14,7 +14,7 @@
   <header class="cosmic-nav">
     <div class="container nav-content">
       <a href="/" class="brand-logo">
-        <div class="brand-icon">🎓</div>
+        <div class="brand-icon" data-icon="gradCap" data-size="22"></div>
         <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span></span>
       </a>
       <nav class="nav-links">
@@ -37,8 +37,8 @@
         <p id="event-desc" class="text-muted" style="font-size: 0.95rem; margin-bottom: 16px;"></p>
         
         <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.88rem; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 14px;">
-          <span id="event-date">🗓️ ...</span>
-          <span id="event-physical-seats">💺 ...</span>
+          <span id="event-date" style="display: inline-flex; align-items: center; gap: 6px;"></span>
+          <span id="event-physical-seats" style="display: inline-flex; align-items: center; gap: 6px;"></span>
         </div>
       </div>
     </div>
@@ -46,7 +46,7 @@
     <!-- Live Capacity & Pool Breakdown Card -->
     <div class="glass-card" style="margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="font-size: 1.1rem;">⚡ Live Capacity & Availability</h3>
+        <h3 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;"><span data-icon="zap" data-size="18" style="color: var(--cyan-core);"></span> Live Capacity & Availability</h3>
         <span class="badge badge-cyan" id="live-indicator">● Realtime Sync</span>
       </div>
       <div id="capacity-pools-container">
@@ -148,7 +148,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="goToStep(3)">← Back</button>
             <button type="submit" class="btn btn-primary btn-lg" id="submit-registration-btn">
-              <span>Confirm & Get Ticket 🚀</span>
+              <span>Confirm & Get Ticket <span data-icon="arrowRight" data-size="16" class="icon-right"></span></span>
             </button>
           </div>
         </form>
@@ -157,6 +157,7 @@
   </main>
 
   <script src="/js/cosmic-canvas.js"></script>
+  <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/sse.js"></script>
   <script>
@@ -198,9 +199,10 @@
       document.getElementById('event-banner-img').src = event.banner_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
       
       const startDate = new Date(event.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      document.getElementById('event-date').textContent = `🗓️ ${startDate}`;
-      document.getElementById('event-physical-seats').textContent = `💺 Physical Capacity: ${event.total_physical_seats} Seats`;
+      document.getElementById('event-date').innerHTML = `<span data-icon="calendar" data-size="14"></span> <span>${startDate}</span>`;
+      document.getElementById('event-physical-seats').innerHTML = `<span data-icon="seat" data-size="14"></span> <span>Physical Capacity: ${event.total_physical_seats} Seats</span>`;
       document.getElementById('event-grouping-badge').textContent = groupingExplanation;
+      Icons.replace();
     }
 
     function renderCapacityPools() {
@@ -315,11 +317,12 @@
         const badge = document.getElementById('resolved-bucket-badge');
         if (rem > 0) {
           badge.className = 'badge badge-published';
-          badge.textContent = `🟢 ${rem} Seats Remaining`;
+          badge.innerHTML = `<span data-icon="checkCircle" data-size="12" style="margin-right: 4px;"></span> ${rem} Seats Remaining`;
         } else {
           badge.className = 'badge badge-waiting';
-          badge.textContent = `🟠 Full — Waiting List (#${bucket.waiting_count + 1})`;
+          badge.innerHTML = `<span data-icon="clock" data-size="12" style="margin-right: 4px;"></span> Full — Waiting List (#${bucket.waiting_count + 1})`;
         }
+        Icons.replace(badge);
       }
 
       document.getElementById('reg-summary-text').textContent = `${selectedDept} • ${selectedProg} • ${selectedYear}`;
@@ -349,7 +352,8 @@
       e.preventDefault();
       const submitBtn = document.getElementById('submit-registration-btn');
       submitBtn.setAttribute('disabled', 'true');
-      submitBtn.innerHTML = '<span>Processing Reservation... ⏳</span>';
+      submitBtn.innerHTML = `<span><span data-icon="spinner" data-size="16" class="spin" style="margin-right: 6px;"></span> Processing Reservation...</span>`;
+      Icons.replace(submitBtn);
 
       const name = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim();
@@ -380,7 +384,8 @@
       } catch (err) {
         Toast.error(err.message || 'Registration failed.');
         submitBtn.removeAttribute('disabled');
-        submitBtn.innerHTML = '<span>Confirm & Get Ticket 🚀</span>';
+        submitBtn.innerHTML = `<span>Confirm & Get Ticket <span data-icon="arrowRight" data-size="16" class="icon-right"></span></span>`;
+        Icons.replace(submitBtn);
       }
     }
 

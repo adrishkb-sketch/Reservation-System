@@ -6,44 +6,6 @@
   <title>Digital Boarding Pass | CampusPass</title>
   <link rel="stylesheet" href="/css/cosmic.css">
   <link rel="stylesheet" href="/css/components.css">
-  <style>
-    @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-      }
-      #ambient-canvas, .aurora-bg, .cosmic-nav, .search-box-card, .btn-action-row, .mobile-nav-bar {
-        display: none !important;
-      }
-      .container {
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-      .ticket-container {
-        max-width: 100% !important;
-        margin: 0 auto !important;
-        box-shadow: none !important;
-      }
-      .hologram-ticket {
-        border: 2px solid #000000 !important;
-        box-shadow: none !important;
-        color: #000000 !important;
-        background: #ffffff !important;
-      }
-      .hologram-ticket h2, .hologram-ticket h3, .hologram-ticket strong {
-        color: #000000 !important;
-      }
-      .text-cyan, .text-purple, .text-gradient, #ticket-student-name, #ticket-event-time {
-        color: #000000 !important;
-        -webkit-text-fill-color: initial !important;
-      }
-      .ticket-qr-box {
-        box-shadow: none !important;
-        border: 1px solid #ccc !important;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="aurora-bg"></div>
@@ -130,8 +92,8 @@
 
           <!-- Large Dynamic QR Code Center -->
           <div style="text-align: center;">
-            <div class="ticket-qr-box">
-              <div id="qrcode-canvas-container"></div>
+            <div class="ticket-qr-box" id="ticket-qr-wrapper">
+              <div id="qrcode-canvas-container" style="min-width: 180px; min-height: 180px; display: flex; align-items: center; justify-content: center;"></div>
             </div>
             <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 6px;">Cryptographic Entry Pass</div>
           </div>
@@ -141,15 +103,12 @@
             ⚠️ <strong>Check this ticket again before attending to see the latest seat number and registration status.</strong>
           </div>
 
-          <!-- Action Buttons (Print, Download as Image, Copy Ref) -->
-          <div class="btn-action-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px;">
-            <button type="button" onclick="printTicket()" class="btn btn-secondary" id="btn-print-ticket">
-              🖨️ Print Ticket
+          <!-- Action Buttons (Save Ticket PNG & Copy Ref) -->
+          <div class="btn-action-row" style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+            <button type="button" onclick="downloadTicketImage()" class="btn btn-primary btn-block btn-lg" id="btn-save-ticket">
+              💾 Save Ticket (PNG)
             </button>
-            <button type="button" onclick="downloadTicketImage()" class="btn btn-primary" id="btn-save-ticket">
-              💾 Save Image (PNG)
-            </button>
-            <button type="button" onclick="copyReferenceCode()" class="btn btn-outline-cyan btn-block" style="grid-column: 1/-1;">
+            <button type="button" onclick="copyReferenceCode()" class="btn btn-secondary btn-block">
               📋 Copy Reference Code
             </button>
           </div>
@@ -166,6 +125,7 @@
   <script>
     let currentReg = null;
     let liveStream = null;
+    let latestQrDataUrl = null;
 
     const urlParams = new URLSearchParams(window.location.search);
     const initialRef = urlParams.get('ref') || localStorage.getItem('last_ticket_ref');
@@ -247,12 +207,13 @@
         checkinDisplay.innerHTML = `<span class="text-muted">Not Checked In</span>`;
       }
 
+      // Generate QR Code cleanly
       const qrContainer = document.getElementById('qrcode-canvas-container');
       qrContainer.innerHTML = '';
       
       const qrPayload = localStorage.getItem(`qr_${r.referenceCode}`) || r.referenceCode;
 
-      new QRCode(qrContainer, {
+      const qr = new QRCode(qrContainer, {
         text: qrPayload,
         width: 180,
         height: 180,
@@ -260,18 +221,19 @@
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
       });
+
+      // Extract image data URL to guarantee capture in PNG download
+      setTimeout(() => {
+        const canvas = qrContainer.querySelector('canvas');
+        if (canvas) {
+          latestQrDataUrl = canvas.toDataURL('image/png');
+          // Replace canvas with clear img tag so html2canvas captures it directly
+          qrContainer.innerHTML = `<img id="rendered-qr-img" src="${latestQrDataUrl}" alt="QR Code" style="width:180px;height:180px;display:block;" />`;
+        }
+      }, 100);
     }
 
-    // 1. Direct Print Function with Browser Fallbacks
-    function printTicket() {
-      if (!currentReg) {
-        Toast.error('Please load a valid ticket first.');
-        return;
-      }
-      window.print();
-    }
-
-    // 2. High-Resolution PNG Ticket Download
+    // High-Resolution PNG Ticket Download with 100% guaranteed QR Code
     async function downloadTicketImage() {
       if (!currentReg) {
         Toast.error('Please load a valid ticket first.');
@@ -281,35 +243,40 @@
       const saveBtn = document.getElementById('btn-save-ticket');
       const origText = saveBtn.innerHTML;
       saveBtn.setAttribute('disabled', 'true');
-      saveBtn.innerHTML = 'Rendering Image... ⏳';
+      saveBtn.innerHTML = 'Generating High-Res Ticket... ⏳';
 
       const ticketElement = document.getElementById('digital-ticket-card');
 
       try {
-        if (typeof html2canvas === 'function') {
-          const canvas = await html2canvas(ticketElement, {
-            scale: 2, // High resolution retina output
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#111827'
-          });
+        // Ensure QR image is populated
+        const qrImg = document.getElementById('rendered-qr-img');
+        const qrDataUrl = qrImg ? qrImg.src : latestQrDataUrl;
 
-          const dataUrl = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.download = `Ticket-${currentReg.referenceCode}.png`;
-          link.href = dataUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          Toast.success('Ticket image downloaded successfully! 🎫');
-        } else {
-          // Fallback to print dialog
-          window.print();
-        }
+        const canvas = await html2canvas(ticketElement, {
+          scale: 2, // 2x Retina resolution
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#111827',
+          logging: false,
+          onclone: (clonedDoc) => {
+            const clonedQrBox = clonedDoc.querySelector('#qrcode-canvas-container');
+            if (clonedQrBox && qrDataUrl) {
+              clonedQrBox.innerHTML = `<img src="${qrDataUrl}" style="width:180px;height:180px;display:block;margin:0 auto;" />`;
+            }
+          }
+        });
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `Ticket-${currentReg.referenceCode}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        Toast.success('Ticket image saved with QR code! 🎫');
       } catch (err) {
         console.error('Download ticket error:', err);
-        Toast.info('Opening print dialog to save as PDF...');
-        window.print();
+        Toast.error('Failed to generate PNG image.');
       } finally {
         saveBtn.removeAttribute('disabled');
         saveBtn.innerHTML = origText;

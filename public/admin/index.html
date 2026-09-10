@@ -3,41 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Admin Dashboard | CampusPass Admin</title>
+  <title>Admin Portal | CampusPass</title>
   <link rel="stylesheet" href="/css/cosmic.css">
   <link rel="stylesheet" href="/css/components.css">
 </head>
 <body>
   <div class="aurora-bg"></div>
 
-  <!-- Admin Nav -->
-  <header class="cosmic-nav">
-    <div class="container nav-content">
-      <a href="/admin/index.html" class="brand-logo">
-        <div class="brand-icon">🛡️</div>
-        <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">ADMIN</span></span>
-      </a>
-      <div id="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
-        <span id="admin-user-display" style="font-size: 0.88rem; color: var(--text-muted);"></span>
-        <a href="/" class="btn btn-secondary btn-sm">Public Portal</a>
-        <button onclick="handleLogout()" class="btn btn-danger btn-sm" id="logout-btn">Logout</button>
-      </div>
+  <!-- Unauthenticated Login View (Default) -->
+  <div id="admin-login-view" style="display: none; padding: 40px 20px;">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div class="brand-icon" style="margin: 0 auto 12px; width: 52px; height: 52px; font-size: 26px;">🛡️</div>
+      <h1 style="font-size: 1.6rem; color: #fff;">CampusPass Admin Access</h1>
+      <p class="text-muted" style="font-size: 0.88rem; margin-top: 4px;">Sign in to access event controls, seat allocation, and scanner.</p>
     </div>
-  </header>
 
-  <main class="container" style="padding-top: 28px; padding-bottom: 70px;">
-    <!-- Auth Login View (Shown if not logged in) -->
-    <div id="admin-login-card" class="glass-card" style="max-width: 440px; margin: 40px auto; display: none;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div class="brand-icon" style="margin: 0 auto 12px; width: 48px; height: 48px; font-size: 24px;">🔐</div>
-        <h2 style="font-size: 1.5rem;">Admin Authentication</h2>
-        <p class="text-muted" style="font-size: 0.85rem; margin-top: 4px;">Sign in with your configured admin credentials.</p>
-      </div>
-
+    <div class="glass-card" style="max-width: 420px; margin: 0 auto;">
       <form id="admin-login-form" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label" for="login-id">Login ID</label>
-          <input type="text" id="login-id" required class="form-input" placeholder="Admin Login ID" autocomplete="username">
+          <label class="form-label" for="login-id">Admin Login ID</label>
+          <input type="text" id="login-id" required class="form-input" placeholder="Login ID" autocomplete="username">
         </div>
 
         <div class="form-group">
@@ -50,9 +35,26 @@
         </button>
       </form>
     </div>
+  </div>
 
-    <!-- Admin Dashboard View (Shown if authenticated) -->
-    <div id="admin-dashboard-view" style="display: none;">
+  <!-- Authenticated Admin Interface (Protected) -->
+  <div id="admin-dashboard-view" style="display: none;">
+    <!-- Admin Nav -->
+    <header class="cosmic-nav">
+      <div class="container nav-content">
+        <a href="/admin/index.html" class="brand-logo">
+          <div class="brand-icon">🛡️</div>
+          <span>CAMPUS<span style="color: var(--indigo-core);">PASS</span> <span style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; background: rgba(56,189,248,0.12); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56,189,248,0.3);">ADMIN</span></span>
+        </a>
+        <div id="admin-header-actions" style="display: flex; gap: 12px; align-items: center;">
+          <span id="admin-user-display" style="font-size: 0.88rem; color: var(--text-muted);"></span>
+          <a href="/" class="btn btn-secondary btn-sm" target="_blank">View Portal ↗</a>
+          <button onclick="handleLogout()" class="btn btn-danger btn-sm" id="logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="padding-top: 28px; padding-bottom: 70px;">
       <!-- Dashboard Top Header -->
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
         <div>
@@ -135,49 +137,54 @@
       <div id="admin-events-list-container">
         <!-- Injected events -->
       </div>
-    </div>
-  </main>
+    </main>
 
-  <!-- Mobile Bottom Nav -->
-  <nav class="mobile-nav-bar">
-    <div class="mobile-nav-grid">
-      <a href="/admin/index.html" class="mobile-nav-item active">
-        <span class="mobile-nav-icon">📊</span>
-        <span>Overview</span>
-      </a>
-      <a href="/admin/events.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">📅</span>
-        <span>Events</span>
-      </a>
-      <a href="/admin/registrations.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">👥</span>
-        <span>Students</span>
-      </a>
-      <a href="/admin/scanner.html" class="mobile-nav-item">
-        <span class="mobile-nav-icon">📷</span>
-        <span>Scanner</span>
-      </a>
-    </div>
-  </nav>
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-nav-bar">
+      <div class="mobile-nav-grid">
+        <a href="/admin/index.html" class="mobile-nav-item active">
+          <span class="mobile-nav-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="/admin/events.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📅</span>
+          <span>Events</span>
+        </a>
+        <a href="/admin/registrations.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">👥</span>
+          <span>Students</span>
+        </a>
+        <a href="/admin/scanner.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon">📷</span>
+          <span>Scanner</span>
+        </a>
+      </div>
+    </nav>
+  </div>
 
   <script src="/js/cosmic-canvas.js"></script>
   <script src="/js/api.js"></script>
   <script>
-    let currentAdmin = null;
-
     async function checkAuth() {
       try {
         const res = await API.get('/auth/me');
-        currentAdmin = res.admin;
-        document.getElementById('admin-user-display').textContent = `Admin: ${currentAdmin.loginId}`;
-        document.getElementById('admin-login-card').style.display = 'none';
-        document.getElementById('admin-dashboard-view').style.display = 'block';
-        loadDashboardStats();
-        loadAdminEvents();
+        if (res && res.admin) {
+          document.getElementById('admin-user-display').textContent = `Admin: ${res.admin.loginId}`;
+          document.getElementById('admin-login-view').style.display = 'none';
+          document.getElementById('admin-dashboard-view').style.display = 'block';
+          loadDashboardStats();
+          loadAdminEvents();
+        } else {
+          showLoginView();
+        }
       } catch (err) {
-        document.getElementById('admin-login-card').style.display = 'block';
-        document.getElementById('admin-dashboard-view').style.display = 'none';
+        showLoginView();
       }
+    }
+
+    function showLoginView() {
+      document.getElementById('admin-login-view').style.display = 'block';
+      document.getElementById('admin-dashboard-view').style.display = 'none';
     }
 
     async function handleLogin(e) {
@@ -205,10 +212,8 @@
       try {
         await API.post('/auth/logout', {});
         Toast.info('Logged out successfully.');
-        window.location.reload();
-      } catch (err) {
-        window.location.reload();
-      }
+      } catch (err) {}
+      window.location.reload();
     }
 
     async function loadDashboardStats() {

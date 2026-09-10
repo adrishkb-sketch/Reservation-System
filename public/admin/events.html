@@ -10,6 +10,7 @@
 <body>
   <div class="aurora-bg"></div>
 
+<div id="admin-auth-wrapper" style="display: none;">
   <!-- Admin Nav -->
   <header class="cosmic-nav">
     <div class="container nav-content">
@@ -20,6 +21,7 @@
       <div style="display: flex; gap: 10px; align-items: center;">
         <a href="/admin/index.html" class="nav-link">← Dashboard</a>
         <a href="/admin/events.html?action=create" class="btn btn-primary btn-sm">+ New Event</a>
+        <button onclick="handleAdminLogout()" class="btn btn-danger btn-sm">Logout</button>
       </div>
     </div>
   </header>
@@ -191,6 +193,7 @@
 
   <script src="/js/cosmic-canvas.js"></script>
   <script src="/js/api.js"></script>
+  <script src="/js/admin-guard.js"></script>
   <script>
     const DEPARTMENTS = ['CSE', 'IT', 'CT'];
     const PROGRAMS = ['B.Tech', 'M.Tech'];
@@ -466,14 +469,22 @@
       }
     }
 
-    initEligibilityMatrix();
-    refreshBucketPreview();
-    loadAllEvents();
+    async function initPage() {
+      const admin = await protectAdminPage();
+      if (!admin) return;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('id')) {
-      editEvent(urlParams.get('id'));
+      initEligibilityMatrix();
+      refreshBucketPreview();
+      loadAllEvents();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('id')) {
+        editEvent(urlParams.get('id'));
+      }
     }
+
+    initPage();
   </script>
+</div>
 </body>
 </html>

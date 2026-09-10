@@ -11,7 +11,7 @@
 <body>
   <div class="aurora-bg"></div>
 
-  <!-- Navigation -->
+  <!-- Navigation (Public Student Navigation - Zero Admin Traces) -->
   <header class="cosmic-nav">
     <div class="container nav-content">
       <a href="/" class="brand-logo" id="nav-brand-logo">
@@ -21,7 +21,6 @@
       <nav class="nav-links">
         <a href="/" class="nav-link active" id="nav-events-link">Explore Events</a>
         <a href="/ticket.html" class="nav-link" id="nav-ticket-link">Find My Ticket</a>
-        <a href="/admin/index.html" class="btn btn-secondary btn-sm" id="nav-admin-btn">Admin Portal</a>
       </nav>
     </div>
   </header>
@@ -64,9 +63,9 @@
     </section>
   </main>
 
-  <!-- Mobile Bottom Nav -->
+  <!-- Mobile Bottom Nav (Students only: Events & My Ticket) -->
   <nav class="mobile-nav-bar">
-    <div class="mobile-nav-grid">
+    <div class="mobile-nav-grid" style="grid-template-columns: repeat(2, 1fr);">
       <a href="/" class="mobile-nav-item active" id="mob-nav-events">
         <span class="mobile-nav-icon">📅</span>
         <span>Events</span>
@@ -74,14 +73,6 @@
       <a href="/ticket.html" class="mobile-nav-item" id="mob-nav-ticket">
         <span class="mobile-nav-icon">🎫</span>
         <span>My Ticket</span>
-      </a>
-      <a href="/admin/index.html" class="mobile-nav-item" id="mob-nav-admin">
-        <span class="mobile-nav-icon">🛡️</span>
-        <span>Admin</span>
-      </a>
-      <a href="/admin/scanner.html" class="mobile-nav-item" id="mob-nav-scanner">
-        <span class="mobile-nav-icon">📷</span>
-        <span>Scanner</span>
       </a>
     </div>
   </nav>
@@ -114,8 +105,7 @@
           <div class="glass-card" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
             <div style="font-size: 48px; margin-bottom: 12px;">🗓️</div>
             <h3>No Published Events Available</h3>
-            <p class="text-muted" style="margin-top: 6px;">New events will appear here once published by administrators.</p>
-            <a href="/admin/events.html" class="btn btn-primary btn-sm" style="margin-top: 16px;">Admin: Create New Event →</a>
+            <p class="text-muted" style="margin-top: 6px;">New events will appear here once published for registration.</p>
           </div>
         `;
         return;
